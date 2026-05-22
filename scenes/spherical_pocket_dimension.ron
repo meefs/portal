@@ -1,0 +1,717 @@
+(
+    desc: (
+        eng: "",
+        rus: "",
+    ),
+    cam: (
+        look_at: (0.0, 0.0, 0.0),
+        alpha: -38.5482190947401,
+        beta: 1.4933528518676729,
+        r: 3.1818181818182043,
+        offset_after_material: 0.000025,
+    ),
+    uniforms: ([
+        (
+            name: "room_size_x",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "room_size_y",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "room_size_z",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "teleport_light",
+            data: Bool(true),
+        ),
+    ]),
+    matrices: ([
+        (
+            name: "room_origin",
+            data: Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "sphere1",
+            data: Simple(
+                offset: (0.0, 0.0, 10.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "sphere2",
+            data: Simple(
+                offset: (0.0, 0.0, 3.44),
+                scale: 1.0,
+                rotate: (0.0, 1.5707963267948966, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "portal1",
+            data: Simple(
+                offset: (0.0, 0.0, 9.5),
+                scale: 0.5,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "portal2",
+            data: Simple(
+                offset: (0.0, 0.0, 2.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+    ]),
+    objects: ([
+        (
+            name: "room_x+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Uniform(Some(Named("room_size_x"))),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(1.5707963267948966),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_z_u, room_size_y_u, room_yellow_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_x-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Uniform(Some(Inline(Formula(("-room_size_x"))))),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(1.5707963267948966),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_z_u, room_size_y_u, room_red_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_y+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Uniform(Some(Named("room_size_y"))),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_z_u, room_black_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_y-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Uniform(Some(Inline(Formula(("-room_size_y"))))),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_z_u, room_gray_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_z+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Named("room_size_z"))),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_y_u, room_blue_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_z-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("-room_size_z"))))),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_y_u, room_green_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "sphere1",
+            data: Complex(
+                kind: Portal(Some(Named("sphere1")), Some(Named("sphere2"))),
+                intersect: (("vec3 op = -r.o.xyz;
+float b = dot(op, r.d.xyz);
+float det = b*b - dot(op, op) + 1.0;
+if (det < 0.) return scene_intersection_none;
+
+det = sqrt(det);
+float t = b - det;
+if (t < 0.) t = b + det;
+if (t < 0.) return scene_intersection_none;
+
+vec4 pos = r.o + r.d * t;
+if ((portal2_mat_inv*(sphere2_mat*pos)).z>0.) {return scene_intersection_none;}
+vec3 n = normalize(pos.xyz);
+
+float u = atan(pos.z, pos.x);
+float v = atan(sqrt(pos.x * pos.x + pos.z * pos.z), pos.y);
+
+if (teleport_light_u == 1) {return SceneIntersection(TELEPORT, SurfaceIntersection(true, t, u, v, n), false);}
+return SceneIntersection(grid_gray_M, SurfaceIntersection(true, t, u, v, n), false);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "portal",
+            data: Flat(
+                kind: Portal(Some(Named("portal1")), Some(Named("portal2"))),
+                is_inside: (("if (x*x + 0.5*y*y < 1.) {
+if (back) {
+  return solid_0_M;
+}
+  return TELEPORT;
+}
+if (x*x + 0.5*y*y < 1.2) {
+  return solid_0_M;
+}
+return NOT_INSIDE;")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "sphere2",
+            data: Complex(
+                kind: Portal(Some(Named("sphere1")), Some(Inline(Teleport(
+                    first_portal: Some(Named("portal2")),
+                    second_portal: Some(Named("portal1")),
+                    what: Some(Named("sphere2")),
+                )))),
+                intersect: (("vec3 op = -r.o.xyz;
+float b = dot(op, r.d.xyz);
+float det = b*b - dot(op, op) + 1.0;
+if (det < 0.) return scene_intersection_none;
+
+det = sqrt(det);
+float t = b - det;
+if (t < 0.) t = b + det;
+if (t < 0.) return scene_intersection_none;
+
+vec4 pos = r.o + r.d * t;
+if ((portal2_mat_inv*(sphere2_mat*pos)).z<0.) {return scene_intersection_none;}
+vec3 n = normalize(pos.xyz);
+
+float u = atan(pos.z, pos.x);
+float v = atan(sqrt(pos.x * pos.x + pos.z * pos.z), pos.y);
+
+if (teleport_light_u == 1) {return SceneIntersection(TELEPORT, SurfaceIntersection(true, t, u, v, n), false);}
+return SceneIntersection(grid_gray_M, SurfaceIntersection(true, t, u, v, n), false);")),
+                in_subspace: Normal,
+            ),
+        ),
+    ]),
+    cameras: ([]),
+    textures: ([
+        (
+            name: "texture",
+            data: ("scenes/img/monoportal.png"),
+        ),
+    ]),
+    materials: ([
+        (
+            name: "room_yellow",
+            data: Simple(
+                color: (0.8980392156862745, 0.8313725490196079, 0.25098039215686274),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_red",
+            data: Simple(
+                color: (0.9058823529411765, 0.29411764705882354, 0.29411764705882354),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_black",
+            data: Simple(
+                color: (0.050980392156862744, 0.050980392156862744, 0.050980392156862744),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_gray",
+            data: Simple(
+                color: (0.2235294117647059, 0.2235294117647059, 0.2235294117647059),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_blue",
+            data: Simple(
+                color: (0.3137254901960784, 0.38823529411764707, 0.9254901960784314),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_blue_texture",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(3.137254901960784e-1, 3.8823529411764707e-1, 9.254901960784314e-1), 5e-1, true, 1.0, 3e-1, false, true);
+result.mul_to_color *= texture(texture_tex, vec2(room_size_x_u + hit.u, room_size_x_u-hit.v) / (room_size_x_u * 2.0)).rgb;
+return result;")),
+            ),
+        ),
+        (
+            name: "room_green",
+            data: Simple(
+                color: (0.2627450980392157, 0.8470588235294118, 0.30196078431372547),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_green_texture",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(2.627450980392157e-1, 8.470588235294118e-1, 3.0196078431372547e-1), 5e-1, true, 1.0, 3e-1, false, true);
+result.mul_to_color *= texture(texture_tex, vec2(room_size_x_u + hit.u, room_size_x_u-hit.v) / (room_size_x_u * 2.0)).rgb;
+return result;")),
+            ),
+        ),
+        (
+            name: "portal_blue",
+            data: Simple(
+                color: (0.03529411764705882, 0.6431372549019608, 0.788235294117647),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "portal_orange",
+            data: Simple(
+                color: (0.9294117647058824, 0.4235294117647059, 0.050980392156862744),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "mirror",
+            data: Reflect(
+                add_to_color: (1.0, 1.0, 1.0),
+            ),
+        ),
+        (
+            name: "grid_gray",
+            data: Simple(
+                color: (0.6666666666666666, 0.6666666666666666, 0.6666666666666666),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "triangle_black",
+            data: Simple(
+                color: (0.043137254901960784, 0.043137254901960784, 0.043137254901960784),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "triangle_white",
+            data: Simple(
+                color: (0.7686274509803922, 0.7686274509803922, 0.7686274509803922),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_black",
+            data: Simple(
+                color: (0.0, 0.0, 0.0),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_0",
+            data: Simple(
+                color: (1.0, 0.24313725490196078, 0.24313725490196078),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_1",
+            data: Simple(
+                color: (0.24313725490196078, 1.0, 0.25098039215686274),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_2",
+            data: Simple(
+                color: (0.1843137254901961, 0.19607843137254902, 1.0),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_3",
+            data: Simple(
+                color: (1.0, 0.9764705882352941, 0.15294117647058825),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+    ]),
+    intersection_materials: ([]),
+    library: ([
+        (
+            name: "common",
+            data: (("bool invert_if(bool value, bool condition) {
+  if (condition) {
+    return !value;
+  } else {
+    return value;
+  }
+}")),
+        ),
+        (
+            name: "room",
+            data: (("int is_inside_square(float x, float y, float sizex, float sizey, int material) {
+  if (abs(x) < sizex && abs(y) < sizey) {
+    return material;
+  } else {
+    return NOT_INSIDE;
+  }
+}
+")),
+        ),
+        (
+            name: "box",
+            data: (("SceneIntersection intersect_box(Ray r, int material) {
+vec3 rad = vec3(4., 4., 4.);
+vec3 m = 1.0/r.d.xyz;
+vec3 n = m*r.o.xyz;
+vec3 k = abs(m)*rad;
+vec3 t1 = -n - k;
+vec3 t2 = -n + k;
+
+float tN = max( max( t1.x, t1.y ), t1.z );
+float tF = min( min( t2.x, t2.y ), t2.z );
+
+float t = tN;
+if (tN < 0.0 && tF > 0.0) t = tF;
+
+if(tN > tF) return scene_intersection_none;
+
+if(t < 0.0) return scene_intersection_none;
+
+vec3 oN = -sign(r.d.xyz)*step(t1.yzx,t1.xyz)*step(t1.zxy,t1.xyz);
+
+vec3 pos = (r.o + r.d * t).xyz;
+
+vec2 uv = vec2(pos.x, pos.y);
+if (abs(abs(pos.x) - rad.x) < 0.0001) {
+  uv = vec2(pos.y, pos.z);
+}
+if (abs(abs(pos.y) - rad.y) < 0.0001) {
+  uv = vec2(pos.x, pos.z);
+}
+
+return SceneIntersection(material, SurfaceIntersection(true, t, uv.x, uv.y, normalize_normal(r.d.xyz, oN)), false);
+}")),
+        ),
+    ]),
+    videos: ([]),
+    animations_filters: (
+        uniforms: {
+            "room_size_x": false,
+            "room_size_y": false,
+            "room_size_z": false,
+            "teleport_light": true,
+        },
+        matrices: {
+            "portal1": false,
+            "portal2": false,
+            "room_origin": false,
+            "sphere1": false,
+            "sphere2": true,
+        },
+        cameras: {},
+    ),
+    elements_descriptions: (
+        uniforms: {
+            "teleport_light": (
+                help_description: None,
+                overrided_name: "Teleport light for sphere",
+            ),
+        },
+        matrices: {
+            "sphere1": (
+                help_description: None,
+                overrided_name: "sphere",
+            ),
+            "sphere2": (
+                help_description: None,
+                overrided_name: "spherical portal",
+            ),
+        },
+        cameras: {},
+    ),
+    user_uniforms: (
+        uniforms: {
+            "teleport_light": true,
+        },
+        matrices: {
+            "sphere1": false,
+            "sphere2": true,
+        },
+    ),
+    animation_stages: ([]),
+    current_stage: Dev,
+    dev_stage: (
+        uniforms: {
+            "room_size_x": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "room_size_y": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "room_size_z": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "teleport_light": Bool(false),
+        },
+        matrices: {
+            "portal1": Simple(
+                offset: (0.0, 0.0, 9.5),
+                scale: 0.5,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "portal2": Simple(
+                offset: (0.0, 0.0, 2.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "room_origin": Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "sphere1": Simple(
+                offset: (0.0, 0.0, 10.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "sphere2": Simple(
+                offset: (0.0, 0.0, 1.72),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        },
+    ),
+    animations: ([]),
+    use_time: false,
+    skybox: None,
+)

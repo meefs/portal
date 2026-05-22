@@ -67,8 +67,43 @@ uniform float _t_end;
 uniform float _t_start;
 uniform int _darken_by_distance;
 uniform mat4 _camera_mul_inv;
+uniform int _draw_depth_map;
+uniform float _depth_map_min;
+uniform float _depth_map_max;
 
-vec3 ray_tracing(Ray r) {
+struct RayTraceResult {
+    vec3 color;
+    float depth;
+    bool has_depth;
+};
+
+float normalize_depth_value(float depth) {
+    float depth_min = min(_depth_map_min, _depth_map_max);
+    float depth_max = max(_depth_map_min, _depth_map_max);
+    return clamp((depth - depth_min) / max(1e-6, depth_max - depth_min), 0.0, 1.0);
+}
+
+vec3 depth_gradient_inferno(float t) {
+    vec3 c0 = sqrvec(vec3(0.001462, 0.000466, 0.013866));
+    vec3 c1 = sqrvec(vec3(0.258234, 0.038571, 0.406485));
+    vec3 c2 = sqrvec(vec3(0.578304, 0.148039, 0.404411));
+    vec3 c3 = sqrvec(vec3(0.865006, 0.316822, 0.226055));
+    vec3 c4 = sqrvec(vec3(0.987622, 0.645320, 0.039886));
+    vec3 c5 = sqrvec(vec3(0.988362, 0.998364, 0.644924));
+
+    if (t < 0.2) return mix(c0, c1, t / 0.2);
+    if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
+    if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
+    if (t < 0.8) return mix(c3, c4, (t - 0.6) / 0.2);
+    return mix(c4, c5, (t - 0.8) / 0.2);
+}
+
+vec3 sample_depth_gradient(float depth) {
+    float t = 1.0 - normalize_depth_value(depth);
+    return depth_gradient_inferno(t);
+}
+
+RayTraceResult ray_tracing(Ray r, float camera_scale) {
     //%skybox_processing//%
 
     vec3 current_color = vec3(1.);
@@ -97,25 +132,30 @@ vec3 ray_tracing(Ray r) {
         if (i.hit.hit || i2.scene.hit.hit) {
             current_color *= m.mul_to_color;
             if (m.is_final) {
-                if (all_t > _t_start && _darken_by_distance == 1) {
-                    if (all_t > _t_end) all_t = _t_end;
-                    float gray_t = (all_t - _t_start) / (_t_end - _t_start);
-                    return color(0., 0., 0.) * sqr(sqr(gray_t)) + current_color * sqr(sqr(1.0 - gray_t));
+                float depth = all_t / max(camera_scale, 1e-6);
+                if (all_t > _t_start * camera_scale && _darken_by_distance == 1) {
+                    if (all_t > _t_end * camera_scale) all_t = _t_end * camera_scale;
+                    float gray_t = (all_t - _t_start * camera_scale) / (_t_end - _t_start) / camera_scale;
+                    return RayTraceResult(
+                        color(0., 0., 0.) * sqr(sqr(gray_t)) + current_color * sqr(sqr(1.0 - gray_t)),
+                        depth,
+                        true
+                    );
                 } else {
-                    return current_color;
+                    return RayTraceResult(current_color, depth, true);
                 }
             } else {
                 r = m.new_ray;
             }
         } else {
             if (r.in_subspace) {
-                return color(0., 0., 0.);
+                return RayTraceResult(color(0., 0., 0.), 0.0, false);
             } else {
-                return current_color * not_found_color;
+                return RayTraceResult(current_color * not_found_color, 0.0, false);
             }
         }
     }
-    return color(0., 0., 0.);
+    return RayTraceResult(color(0., 0., 0.), 0.0, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -163,6 +203,8 @@ struct ExternalRayTeleportation {
 };
 
 uniform int _camera_in_subspace;
+uniform int _left_eye_in_subspace;
+uniform int _right_eye_in_subspace;
 
 ExternalRayTeleportation teleport_external_ray(Ray r) {
     r = normalize_ray(r);
@@ -219,19 +261,32 @@ ExternalRayTeleportation teleport_external_ray(Ray r) {
 // ---------------------------------------------------------------------------
 
 uniform mat4 _camera;
+uniform mat4 _camera_left_eye;
+uniform mat4 _camera_right_eye;
+uniform float _camera_scale;
+uniform float _left_eye_scale;
+uniform float _right_eye_scale;
 uniform float _view_angle;
 uniform int _use_panini_projection;
 uniform int _use_360_camera;
+uniform int _use_180_camera;
 uniform float _panini_param;
 uniform int _aa_count;
 uniform int _aa_start;
+uniform int _draw_side_by_side;
+uniform vec2 _resolution;
+uniform int _draw_anaglyph;
+uniform float _anaglyph_p;
+uniform float _anaglyph_q;
+uniform int _anaglyph_mode;
+
 // absolute coordinates, integer values, from 0
 varying vec2 uv; // !GLSL100!
 in vec2 uv; // !GLSL300!
+
+// uv_screen in [-1, +1]x[-1, +1]
 varying vec2 uv_screen; // !GLSL100!
 in vec2 uv_screen; // !GLSL300!
-varying float pixel_size; // !GLSL100!
-in float pixel_size; // !GLSL300!
 
 layout(location=0) out vec4 FragColor; // !GLSL300!
 
@@ -286,22 +341,165 @@ vec3 PaniniProjection(vec2 tc, float fov, float d)
     return vec3(sinPhi, tanTheta, cosPhi) * s;
 }
 
-vec3 get_color(vec2 image_position) {
-    vec4 o = _camera * vec4(0., 0., 0., 1.);
+// Anaglyph modes:
+// 0 = grayscale luminance red/cyan
+// 1 = Dubois (optimized) red/cyan
+vec3 anaglyphCombineLinear(vec3 leftLin, vec3 rightLin, int mode)
+{
+    // Clamp inputs just in case
+    leftLin  = clamp(leftLin,  0.0, 1.0);
+    rightLin = clamp(rightLin, 0.0, 1.0);
+
+    if (mode == 0)
+    {
+        // Grayscale red/cyan with deghost compensation (linear space).
+        // p = cyan -> red-eye leak
+        // q = red  -> cyan-eye leak
+        const vec3  LUMA = vec3(0.299, 0.587, 0.114);
+        float P    = _anaglyph_p;
+        float Q    = _anaglyph_q;
+
+        float l = dot(leftLin,  LUMA); // left-eye desired luminance (linear)
+        float r = dot(rightLin, LUMA); // right-eye desired luminance (linear)
+
+        float denom = max(1e-6, 1.0 - P * Q);
+
+        // What we actually output to the screen:
+        //   R channel carries left eye (with compensation)
+        //   G/B channels carry right eye (with compensation)
+        float Rout = (l - P * r) / denom;
+        float Cout = (r - Q * l) / denom;
+
+        return clamp(vec3(Rout, Cout, Cout), 0.0, 1.0);
+    }
+    else
+    {
+        // Half-color red/cyan with deghost compensation (linear space).
+        // Output: R = left grayscale (deghosted), G/B = right color (deghosted by scaling)
+        //
+        // Calibrated for your glasses/monitor:
+        float P = _anaglyph_p; // cyan -> red-eye leak
+        float Q = _anaglyph_q; // red  -> cyan-eye leak
+
+        // Keep your luma weights (assumed you're in linear already)
+        const vec3 LUMA = vec3(0.299, 0.587, 0.114);
+
+        float l = dot(leftLin,  LUMA);  // desired left-eye grayscale
+        float r = dot(rightLin, LUMA);  // desired right-eye grayscale
+
+        float denom = max(1e-6, 1.0 - P * Q);
+
+        // Solve for what to emit so that perceived (approx):
+        // red-eye  sees: Rout + P*Cout  ≈ l
+        // cyan-eye sees: Cout + Q*Rout  ≈ r
+        float Rout = (l - P * r) / denom;
+        float Cout = (r - Q * l) / denom;
+
+        // Distribute Cout into G/B while preserving the right image's cyan hue.
+        // We enforce: (Gout + Bout)/2 == Cout
+        float sumGB = rightLin.g + rightLin.b;
+        float k = (sumGB > 1e-6) ? (2.0 * Cout / sumGB) : 0.0;
+
+        vec3 outLin = vec3(Rout, rightLin.g * k, rightLin.b * k);
+        return clamp(outLin, 0.0, 1.0);
+    }
+}
+
+vec3 get_color2(vec2 image_position, mat4 camera_matrix, bool in_subspace, float camera_scale, vec2 resolution) {
+    vec4 o = camera_matrix * vec4(0., 0., 0., 1.);
     vec4 d;
     if (_use_panini_projection == 1) {
-        d = normalize(_camera * vec4(PaniniProjection(vec2(image_position.x, image_position.y), _view_angle, _panini_param), 0.));
+        d = normalize(camera_matrix * vec4(PaniniProjection(vec2(image_position.x, image_position.y), _view_angle, _panini_param), 0.));
     } else if (_use_360_camera == 1) {
-        float u = (image_position.x + 2.) * PI2;
-        float v = (image_position.y + 1.) * PI2;
-        d = vec4(cos(u) * sin(v), cos(v), sin(u) * sin(v), 0.);
+        // Equirectangular mapping where the center of the image looks straight forward
+        // in camera-local space (0, 0, 1). Then we rotate it by `camera_matrix` so the
+        // 360 view follows the same orientation as the regular camera.
+        // Keep 2:1 equirect aspect by adding black bars outside the valid region.
+        float coef = min(resolution.x, resolution.y);
+        float ax = resolution.x / coef;
+        float ay = resolution.y / coef;
+        float rx;
+        float ry;
+        if (ax >= 2.0 * ay) {
+            ry = ay;
+            rx = 2.0 * ay;
+        } else {
+            rx = ax;
+            ry = ax / 2.0;
+        }
+        if (abs(image_position.x) > rx || abs(image_position.y) > ry) {
+            return vec3(0.0);
+        }
+
+        float yaw = (image_position.x / rx) * Pi;
+        float pitch = (image_position.y / ry) * Pi05;
+        vec3 dir_local = vec3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch));
+        d = normalize(camera_matrix * vec4(dir_local, 0.));
+    } else if (_use_180_camera == 1) {
+        // VR180 (front hemisphere) equirectangular.
+        // Use the full image width/height for [-90°, +90°] yaw/pitch, with black borders
+        // outside the square view area (e.g. when the viewport is wider than tall).
+        if (abs(image_position.x) > 1.0 || abs(image_position.y) > 1.0) {
+            return vec3(0.0);
+        }
+        float yaw = image_position.x * Pi05;
+        float pitch = image_position.y * Pi05;
+        vec3 dir_local = vec3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch));
+        d = normalize(camera_matrix * vec4(dir_local, 0.));
     } else {
         float h = tan(_view_angle / 2.);
-        d = normalize(_camera * vec4(image_position.x * h, image_position.y * h, 1.0, 0.));
+        d = normalize(camera_matrix * vec4(image_position.x * h, image_position.y * h, 1.0, 0.));
     }
      
-    Ray r = Ray(o, d, 1.0, _camera_in_subspace == 1);
-    return ray_tracing(r);
+    Ray r = Ray(o, d, 1.0, in_subspace);
+    RayTraceResult trace = ray_tracing(r, camera_scale);
+    if (_draw_depth_map == 1) {
+        if (trace.has_depth) {
+            return sample_depth_gradient(trace.depth);
+        } else {
+            return vec3(0.0);
+        }
+    }
+    return trace.color;
+}
+
+vec3 get_color(vec2 image_position) {
+    if (_draw_anaglyph == 1) { // !ANAGLYPH!
+        return anaglyphCombineLinear( // !ANAGLYPH!
+            get_color2(image_position, _camera_left_eye, _left_eye_in_subspace == 1, _left_eye_scale, _resolution), // !ANAGLYPH!
+            get_color2(image_position, _camera_right_eye, _right_eye_in_subspace == 1, _right_eye_scale, _resolution), // !ANAGLYPH!
+            _anaglyph_mode // !ANAGLYPH!
+        ); // !ANAGLYPH!
+    } else { // !ANAGLYPH!
+        mat4 final_matrix = _camera;
+        bool final_in_subspace = _camera_in_subspace == 1;
+        float final_scale = _camera_scale;
+        vec2 final_resolution = _resolution;
+
+        if (_draw_side_by_side == 1) {
+            float coef = min(_resolution.x, _resolution.y);
+            vec2 position = image_position / 2. * coef + _resolution/2.;
+
+            vec2 resolution = vec2(_resolution.x / 2., _resolution.y);
+            float coef2 = min(resolution.x, resolution.y);
+            
+            if (position.x < resolution.x) {
+                image_position = (position.xy - resolution/2.) / coef2 * 2.;
+                final_matrix = _camera_left_eye;
+                final_in_subspace = _left_eye_in_subspace == 1;
+                final_scale = _left_eye_scale;
+                final_resolution = resolution;
+            } else {
+                image_position = (position.xy - vec2(resolution.x, 0.) - resolution/2.) / coef2 * 2.;
+                final_matrix = _camera_right_eye;
+                final_in_subspace = _right_eye_in_subspace == 1;
+                final_scale = _right_eye_scale;
+                final_resolution = resolution;
+            }
+        }
+
+        return get_color2(image_position, final_matrix, final_in_subspace, final_scale, final_resolution);
+    } // !ANAGLYPH!
 }
 
 // thanks https://habr.com/ru/post/440892/
@@ -318,6 +516,7 @@ void main() {
     vec3 result = vec3(0.);
 
     if (_teleport_external_ray == 0) {
+        float pixel_size = 1. / min(_resolution.x, _resolution.y);
         int a = 0;
         for (int a = 0; a < 16; a++) { if (a >= _aa_count) break; // !FOR_NUMBER! !ANTIALIASING!
         for (int a = _aa_start; a < _aa_count + _aa_start; a++) { // !FOR_VARIABLE! !ANTIALIASING!

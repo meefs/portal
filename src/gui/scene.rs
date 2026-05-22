@@ -6,6 +6,9 @@ use crate::gui::scenes::ShowHiddenScenes;
 use crate::gui::storage2::Storage2;
 use macroquad::prelude::UniformDesc;
 
+use super::scene_serialized::{
+    deserialize_scene_new_format, serialize_scene_new_format, SerializedScene,
+};
 use crate::code_generation::*;
 use crate::gui::animation::*;
 use crate::gui::camera::Cam;
@@ -17,6 +20,7 @@ use crate::gui::matrix::*;
 use crate::gui::object::*;
 use crate::gui::texture::*;
 use crate::gui::uniform::*;
+use crate::gui::video::*;
 use crate::shader_error_parser::*;
 
 use egui::*;
@@ -74,32 +78,35 @@ pub struct Scene {
     pub uniforms: Storage2<AnyUniform>,
 
     pub matrices: Storage2<Matrix>,
-    objects: Storage2<Object>,
+    pub objects: Storage2<Object>,
 
     pub cameras: Storage2<Cam>,
 
     pub textures: Storage2<TextureName>,
 
-    materials: Storage2<Material>,
+    #[serde(default)]
+    pub videos: Storage2<Video>,
+
+    pub materials: Storage2<Material>,
 
     #[serde(default)]
-    intersection_materials: Storage2<IntersectionMaterial>,
+    pub intersection_materials: Storage2<IntersectionMaterial>,
 
-    library: Storage2<LibraryCode>,
+    pub library: Storage2<LibraryCode>,
 
-    animations_filters: AnimationFilters,
+    pub animations_filters: AnimationFilters,
 
-    elements_descriptions: ElementsDescriptions,
+    pub elements_descriptions: ElementsDescriptions,
 
-    user_uniforms: GlobalUserUniforms,
-    animation_stages: Storage2<AnimationStage>,
+    pub user_uniforms: GlobalUserUniforms,
+    pub animation_stages: Storage2<AnimationStage>,
 
-    current_stage: CurrentStage,
+    pub current_stage: CurrentStage,
 
-    dev_stage: DevStage,
+    pub dev_stage: DevStage,
 
     #[serde(default)]
-    animations: Storage2<RealAnimation>,
+    pub animations: Storage2<RealAnimation>,
 
     #[serde(default)]
     pub use_time: bool,
@@ -114,20 +121,29 @@ pub struct Scene {
     prev_t_raw: f64,
 
     #[serde(default)]
-    skybox: Option<String>,
+    pub skybox: Option<String>,
 }
 
 // In case of panic
 impl Drop for Scene {
     fn drop(&mut self) {
-        match ron::to_string(self) {
-            Ok(result) => crate::error!(format, "scene:\n\n{}", result),
-            Err(err) => crate::error!(format, "errors while serializing scene: {:?}", err),
-        }
+        // match ron::to_string(self) {
+        //     Ok(result) => crate::error!(format, "scene:\n\n{}", result),
+        //     Err(err) => crate::error!(format, "errors while serializing scene: {:?}", err),
+        // }
     }
 }
 
 impl Scene {
+    pub fn to_serialized(&self) -> SerializedScene {
+        serialize_scene_new_format(self)
+    }
+
+    pub fn from_serialized(ser: SerializedScene) -> Self {
+        let mut scene: Scene = Default::default();
+        deserialize_scene_new_format(ser, &mut scene);
+        scene
+    }
     pub fn init(&mut self, data: &mut Data, memory: &mut egui::Memory) {
         data.errors = Default::default();
         data.show_error_window = false;
@@ -253,12 +269,15 @@ impl Scene {
 
         changed |= self.textures.egui(ui, &mut data.texture_errors, "Textures");
 
+        with_swapped!(x => (data.video_errors, self.uniforms, data.formulas_cache);
+            changed |= self.videos.egui(ui, &mut x, "Videos"));
+
         ui.collapsing("Skybox", |ui| {
             changed.shader |= egui_option(
                 ui,
                 &mut self.skybox,
                 "Skybox texture",
-                || String::new(),
+                String::new,
                 |ui, t| ui.text_edit_singleline(t).changed(),
             );
         });
@@ -304,6 +323,8 @@ impl Scene {
             ui.separator();
             changed |= self.select_stage_ui(ui, true);
             ui.separator();
+            changed |= self.control_animation_parameters(ui);
+            ui.separator();
             changed |= self.select_animation_ui(ui);
             ui.separator();
             changed.uniform |= egui_bool_named(ui, &mut self.run_animations, "Run all animations");
@@ -339,7 +360,7 @@ impl Scene {
                 drop(std::fs::write("scene_dump_temp.ron", result));
                 drop(std::fs::remove_file("scene_dump.ron"));
                 drop(std::fs::rename("scene_dump_temp.ron", "scene_dump.ron"));
-            },
+            }
             Err(err) => crate::error!(format, "errors while serializing scene: {:?}", err),
         }
 
@@ -371,10 +392,23 @@ pub trait UniformStruct {
 
 impl Scene {
     pub fn textures(&self) -> Vec<String> {
-        self.textures
-            .visible_elements()
-            .map(|(_, name)| TextureName::name(name))
-            .collect()
+        use std::collections::BTreeSet;
+        let mut names = BTreeSet::new();
+        let mut result = Vec::new();
+
+        for (_, name) in self.textures.visible_elements() {
+            if names.insert(name.to_owned()) {
+                result.push(TextureName::name(name));
+            }
+        }
+
+        for (_, name) in self.videos.visible_elements() {
+            if names.insert(name.to_owned()) {
+                result.push(TextureName::name(name));
+            }
+        }
+
+        result
     }
 
     pub fn compile_all_formulas(&self, cache: &FormulasCache) {
@@ -462,18 +496,34 @@ impl Scene {
 
         result.extend(vec![
             ("_camera".to_owned(), UniformType::Mat4),
+            ("_camera_left_eye".to_owned(), UniformType::Mat4),
+            ("_camera_right_eye".to_owned(), UniformType::Mat4),
             ("_camera_mul_inv".to_owned(), UniformType::Mat4),
             ("_camera_in_subspace".to_owned(), UniformType::Int1),
+            ("_left_eye_in_subspace".to_owned(), UniformType::Int1),
+            ("_right_eye_in_subspace".to_owned(), UniformType::Int1),
             ("_resolution".to_owned(), UniformType::Float2),
             ("_ray_tracing_depth".to_owned(), UniformType::Int1),
             ("_aa_count".to_owned(), UniformType::Int1),
             ("_aa_start".to_owned(), UniformType::Int1),
+            ("_draw_side_by_side".to_owned(), UniformType::Int1),
             ("_offset_after_material".to_owned(), UniformType::Float1),
+            ("_draw_anaglyph".to_owned(), UniformType::Int1),
+            ("_anaglyph_p".to_owned(), UniformType::Float1),
+            ("_anaglyph_q".to_owned(), UniformType::Float1),
+            ("_anaglyph_mode".to_owned(), UniformType::Int1),
+            ("_draw_depth_map".to_owned(), UniformType::Int1),
+            ("_depth_map_min".to_owned(), UniformType::Float1),
+            ("_depth_map_max".to_owned(), UniformType::Float1),
+            ("_camera_scale".to_owned(), UniformType::Float1),
+            ("_left_eye_scale".to_owned(), UniformType::Float1),
+            ("_right_eye_scale".to_owned(), UniformType::Float1),
             ("_t_start".to_owned(), UniformType::Float1),
             ("_t_end".to_owned(), UniformType::Float1),
             ("_view_angle".to_owned(), UniformType::Float1),
             ("_use_panini_projection".to_owned(), UniformType::Int1),
             ("_use_360_camera".to_owned(), UniformType::Int1),
+            ("_use_180_camera".to_owned(), UniformType::Int1),
             ("_angle_color_disable".to_owned(), UniformType::Int1),
             ("_darken_by_distance".to_owned(), UniformType::Int1),
             ("_grid_disable".to_owned(), UniformType::Int1),
@@ -650,9 +700,20 @@ impl Scene {
 
         storages.insert("textures".to_owned(), {
             let mut result = StringStorage::default();
+            use std::collections::BTreeSet;
+            let mut names = BTreeSet::new();
+
             for (_, name) in self.textures.visible_elements() {
-                result.add_string(format!("uniform sampler2D {};\n", TextureName::name(name)));
+                names.insert(name.to_owned());
             }
+            for (_, name) in self.videos.visible_elements() {
+                names.insert(name.to_owned());
+            }
+
+            for name in names {
+                result.add_string(format!("uniform sampler2D {};\n", TextureName::name(&name)));
+            }
+
             result
         });
 
@@ -843,8 +904,8 @@ impl Scene {
                     }
                     Flat { kind, is_inside: _, in_subspace } => {
                         match in_subspace {
-                            SubspaceType::Normal => result.add_string(format!("if (r.in_subspace == false) {{")),
-                            SubspaceType::Subspace => result.add_string(format!("if (r.in_subspace == true) {{")),
+                            SubspaceType::Normal => result.add_string("if (r.in_subspace == false) {"),
+                            SubspaceType::Subspace => result.add_string("if (r.in_subspace == true) {"),
                             SubspaceType::Both => {},
                         }
                         match kind {
@@ -887,14 +948,14 @@ impl Scene {
                             }
                         };
                         match in_subspace {
-                            SubspaceType::Normal | SubspaceType::Subspace => result.add_string(format!("}}")),
+                            SubspaceType::Normal | SubspaceType::Subspace => result.add_string("}"),
                             SubspaceType::Both => {},
                         }
                     },
                     Complex { kind, intersect: _, in_subspace } => {
                         match in_subspace {
-                            SubspaceType::Normal => result.add_string(format!("if (r.in_subspace == false) {{")),
-                            SubspaceType::Subspace => result.add_string(format!("if (r.in_subspace == true) {{")),
+                            SubspaceType::Normal => result.add_string("if (r.in_subspace == false) {"),
+                            SubspaceType::Subspace => result.add_string("if (r.in_subspace == true) {"),
                             SubspaceType::Both => {},
                         }
                         match kind {
@@ -937,7 +998,7 @@ impl Scene {
                             }
                         };
                         match in_subspace {
-                            SubspaceType::Normal | SubspaceType::Subspace => result.add_string(format!("}}")),
+                            SubspaceType::Normal | SubspaceType::Subspace => result.add_string("}"),
                             SubspaceType::Both => {},
                         }
                     },
@@ -1008,19 +1069,36 @@ impl Scene {
             let number_for = line.contains("!FOR_NUMBER!");
             let variable_for = line.contains("!FOR_VARIABLE!");
             let antialiasing_line = line.contains("!ANTIALIASING!");
+            let anaglyph_line = line.contains("!ANAGLYPH!");
             let camera_teleportation_line = line.contains("!CAMERA_TELEPORTATION!");
             let glsl_100 = line.contains("!GLSL100!");
             let glsl_300 = line.contains("!GLSL300!");
             if (number_for && data.for_prefer_variable)
                 || (variable_for && !data.for_prefer_variable)
                 || (antialiasing_line && data.disable_antialiasing)
+                || (anaglyph_line && data.disable_anaglyph)
                 || (camera_teleportation_line && data.disable_camera_teleportation)
                 || (glsl_100 && data.use_300_version)
                 || (glsl_300 && !data.use_300_version)
             {
                 // skip line
             } else {
-                res_storage += &line;
+                let line = if line.trim_start().starts_with("#version") {
+                    let mut end = line.len();
+                    if let Some(pos) = line.find("//") {
+                        end = end.min(pos);
+                    }
+                    let line = line[..end].trim_end();
+                    if cfg!(target_os = "macos") && data.use_300_version && line == "#version 300 es"
+                    {
+                        "#version 330 core"
+                    } else {
+                        line
+                    }
+                } else {
+                    line
+                };
+                res_storage += line;
             }
             res_storage += "\n";
         }
@@ -1037,15 +1115,22 @@ impl Scene {
 
         use macroquad::prelude::load_material;
         use macroquad::prelude::MaterialParams;
+        use std::borrow::Cow;
+
+        let vertex: Cow<'_, str> = if data.use_300_version {
+            if cfg!(target_os = "macos") {
+                Cow::Owned(VERTEX_SHADER_300.replace("#version 300 es", "#version 330 core"))
+            } else {
+                Cow::Borrowed(VERTEX_SHADER_300)
+            }
+        } else {
+            Cow::Borrowed(VERTEX_SHADER_100)
+        };
 
         Some(
             load_material(
                 macroquad::prelude::ShaderSource::Glsl {
-                    vertex: if data.use_300_version {
-                        VERTEX_SHADER_300
-                    } else {
-                        VERTEX_SHADER_100
-                    },
+                    vertex: vertex.as_ref(),
                     fragment: &code.storage,
                 },
                 MaterialParams {
@@ -1129,11 +1214,19 @@ impl Scene {
                 animation.uniforms.init_stage(&mut self.uniforms);
                 animation.matrices.init_stage(&mut self.matrices);
 
-                let cam_start = self.get_start_cam(&animation, id);
-                if let Some(cam) = cam_start {
-                    memory
-                        .data
-                        .insert_persisted(egui::Id::new("CurrentCam"), CurrentCam(Some(cam)));
+                let disable_cam_interp_id = egui::Id::new("RealAnimationDisableCamInterpolation");
+                let disable_cam_interp = memory
+                    .data
+                    .get_persisted::<bool>(disable_cam_interp_id)
+                    .unwrap_or(false);
+
+                if !disable_cam_interp {
+                    let cam_start = self.get_start_cam(&animation, id);
+                    if let Some(cam) = cam_start {
+                        memory
+                            .data
+                            .insert_persisted(egui::Id::new("CurrentCam"), CurrentCam(Some(cam)));
+                    }
                 }
             }
         }
@@ -1256,12 +1349,20 @@ impl Scene {
     }
 
     pub fn update(&mut self, memory: &mut egui::Memory, data: &mut Data, mut time: f64) {
+        let total_time;
         if self.animation_stage_edit_state {
             drop(self.init_stage(self.current_stage, memory));
         }
 
         if self.run_animations {
-            time = time % self.total_animation_duration();
+            let total_duration = self.total_animation_duration();
+            if total_duration > 0.0 {
+                time %= total_duration;
+                total_time = time;
+            } else {
+                time = 0.0;
+                total_time = 0.0;
+            }
             for id in self
                 .animations
                 .visible_elements()
@@ -1281,41 +1382,113 @@ impl Scene {
             }
         } else if let CurrentStage::RealAnimation(id) = self.current_stage {
             let duration = self.animations.get_original(id).unwrap().duration;
-            time = (time % duration) / duration;
+            if duration > 0.0 {
+                let mut local_seconds = time % duration;
+
+                // Override time with manual value from UI slider if enabled.
+                let enabled_id = egui::Id::new("RealAnimationManualTimeEnabled");
+                let value_id = egui::Id::new("RealAnimationManualTimeValue");
+
+                if memory
+                    .data
+                    .get_persisted::<bool>(enabled_id)
+                    .unwrap_or(false)
+                {
+                    if let Some(value) = memory.data.get_persisted::<f64>(value_id) {
+                        let clamped = value.clamp(0.0, 1.0);
+                        time = clamped;
+                        local_seconds = clamped * duration;
+                    } else {
+                        time = local_seconds / duration;
+                    }
+                } else {
+                    time = local_seconds / duration;
+                }
+
+                // Sum durations of all previous real animations in visible order.
+                let prefix = self
+                    .animations
+                    .visible_elements()
+                    .map(|(aid, _)| aid)
+                    .take_while(|aid| *aid != id)
+                    .map(|aid| self.animations.get_original(aid).unwrap().duration)
+                    .sum::<f64>();
+
+                total_time = prefix + local_seconds;
+            } else {
+                time = 0.0;
+                total_time = 0.0;
+            }
+        } else {
+            total_time = time;
         }
         data.formulas_cache.set_time(time);
+        data.formulas_cache.set_total_time(total_time);
 
         if let CurrentStage::RealAnimation(id) = self.current_stage {
-            let animation = self.animations.get_original(id).unwrap();
-            let cam_start = self.get_start_cam(animation, id);
-            let cam_end = self.get_end_cam(animation, id);
-            if let Some((cam1id, cam2id)) = cam_start.zip(cam_end) {
-                let cam1 = with_swapped!(x => (self.uniforms, data.formulas_cache);
-                    self.cameras.get_original(cam1id).unwrap().get(&self.matrices, &x).unwrap());
-                let cam2 = with_swapped!(x => (self.uniforms, data.formulas_cache);
-                    self.cameras.get_original(cam2id).unwrap().get(&self.matrices, &x).unwrap());
+            let disable_cam_interp_id = egui::Id::new("RealAnimationDisableCamInterpolation");
+            let disable_cam_interp = memory
+                .data
+                .get_persisted::<bool>(disable_cam_interp_id)
+                .unwrap_or(false);
+            let apply_once_id = egui::Id::new("RealAnimationDisableCamInterpolationOnce");
+            let apply_once = memory
+                .data
+                .get_persisted::<bool>(apply_once_id)
+                .unwrap_or(false);
 
-                let t_raw = data.formulas_cache.get_time() % 1.;
-                let t = animation.cam_easing.ease(t_raw);
+            if !disable_cam_interp || apply_once {
+                let animation = self.animations.get_original(id).unwrap();
+                let cam_start = self.get_start_cam(animation, id);
+                let cam_end = self.get_end_cam(animation, id);
+                if let Some((cam1id, cam2id)) = cam_start.zip(cam_end) {
+                    let cam1 = with_swapped!(x => (self.uniforms, data.formulas_cache);
+                        self.cameras.get_original(cam1id).unwrap().get(&self.matrices, &x).unwrap());
+                    let cam2 = with_swapped!(x => (self.uniforms, data.formulas_cache);
+                        self.cameras.get_original(cam2id).unwrap().get(&self.matrices, &x).unwrap());
 
-                let override_matrix = t_raw < self.prev_t_raw || t_raw == 0.;
+                    let t_raw = data.formulas_cache.get_time() % 1.;
+                    let t = if let Some(opt_uid) = animation.cam_easing_uniform {
+                        if let Some(uid) = opt_uid {
+                            if let Some(value) = self.uniforms.get(uid, &data.formulas_cache) {
+                                let mut v: f64 = value.into();
+                                if !v.is_finite() {
+                                    v = 0.0;
+                                }
+                                v.clamp(0.0, 1.0)
+                            } else {
+                                animation.cam_easing.ease(t_raw)
+                            }
+                        } else {
+                            animation.cam_easing.ease(t_raw)
+                        }
+                    } else {
+                        animation.cam_easing.ease(t_raw)
+                    };
 
-                let cam = CalculatedCam {
-                    look_at: cam1.look_at.lerp(cam2.look_at, t),
-                    alpha: lerp(cam1.alpha..=cam2.alpha, t),
-                    beta: lerp(cam1.beta..=cam2.beta, t),
-                    r: lerp(cam1.r..=cam2.r, t),
-                    in_subspace: cam1.in_subspace,
-                    free_movement: cam1.free_movement,
-                    matrix: cam1.matrix,
-                    override_matrix,
-                };
+                    let override_matrix = t_raw < self.prev_t_raw || t_raw == 0.;
 
-                memory
-                    .data
-                    .insert_persisted(egui::Id::new("OverrideCam"), cam);
+                    let cam = CalculatedCam {
+                        look_at: cam1.look_at.lerp(cam2.look_at, t),
+                        alpha: lerp(cam1.alpha..=cam2.alpha, t),
+                        beta: lerp(cam1.beta..=cam2.beta, t),
+                        r: lerp(cam1.r..=cam2.r, t),
+                        in_subspace: cam1.in_subspace,
+                        free_movement: cam1.free_movement,
+                        matrix: cam1.matrix,
+                        override_matrix,
+                    };
 
-                self.prev_t_raw = t_raw;
+                    memory
+                        .data
+                        .insert_persisted(egui::Id::new("OverrideCam"), cam);
+
+                    self.prev_t_raw = t_raw;
+                }
+
+                if apply_once {
+                    memory.data.insert_persisted(apply_once_id, false);
+                }
             }
         }
     }
@@ -1355,6 +1528,59 @@ impl Scene {
             }
         });
         self.current_stage = current_stage;
+        changed
+    }
+
+    pub fn control_animation_parameters(&mut self, ui: &mut Ui) -> WhatChanged {
+        ui.label("Control animations:");
+
+        let mut changed = WhatChanged::default();
+
+        let enabled_id = egui::Id::new("RealAnimationManualTimeEnabled");
+        let value_id = egui::Id::new("RealAnimationManualTimeValue");
+        let free_cam_id = egui::Id::new("RealAnimationDisableCamInterpolation");
+
+        ui.horizontal(|ui| {
+            let mut manual_enabled = ui
+                .memory_mut(|memory| *memory.data.get_persisted_mut_or_default::<bool>(enabled_id));
+            changed.uniform |= ui.checkbox(&mut manual_enabled, "Manual time").changed();
+            ui.memory_mut(|memory| {
+                memory.data.insert_persisted(enabled_id, manual_enabled);
+            });
+
+            if manual_enabled {
+                let mut manual_value = ui.memory_mut(|memory| {
+                    *memory.data.get_persisted_mut_or_default::<f64>(value_id)
+                });
+                changed.uniform |= ui
+                    .add(
+                        egui::Slider::new(&mut manual_value, 0.0..=1.0)
+                            .clamping(SliderClamping::Always),
+                    )
+                    .changed();
+                ui.memory_mut(|memory| {
+                    memory.data.insert_persisted(value_id, manual_value);
+                });
+            }
+        });
+
+        let mut free_cam = ui.memory_mut(|memory| {
+            *memory
+                .data
+                .get_persisted_mut_or_default::<bool>(free_cam_id)
+        });
+        let prev_free_cam = free_cam;
+        changed.uniform |= ui.checkbox(&mut free_cam, "Free cam").changed();
+        ui.memory_mut(|memory| {
+            memory.data.insert_persisted(free_cam_id, free_cam);
+            if !prev_free_cam && free_cam {
+                memory.data.insert_persisted(
+                    egui::Id::new("RealAnimationDisableCamInterpolationOnce"),
+                    true,
+                );
+            }
+        });
+
         changed
     }
 
@@ -1422,9 +1648,9 @@ const VERTEX_SHADER_100: &str = "#version 100
 attribute vec3 position;
 attribute vec2 texcoord;
 
+// NOTE THAT ALL THESE VALUES ARE INTERPOLATING BETWEEN TRIANGLE VERTICES!!!
 varying vec2 uv;
 varying vec2 uv_screen;
-varying float pixel_size;
 
 uniform mat4 Model;
 uniform mat4 Projection;
@@ -1438,7 +1664,6 @@ void main() {
     float coef = min(_resolution.x, _resolution.y);
     uv_screen = (position.xy - _resolution/2.) / coef * 2.;
     uv = position.xy;
-    pixel_size = 1. / coef;
 
     gl_Position = res;
 }
@@ -1448,9 +1673,9 @@ const VERTEX_SHADER_300: &str = "#version 300 es
 in vec3 position;
 in vec2 texcoord;
 
+// NOTE THAT ALL THESE VALUES ARE INTERPOLATING BETWEEN TRIANGLE VERTICES!!!
 out vec2 uv;
 out vec2 uv_screen;
-out float pixel_size;
 
 uniform mat4 Model;
 uniform mat4 Projection;
@@ -1464,7 +1689,6 @@ void main() {
     float coef = min(_resolution.x, _resolution.y);
     uv_screen = (position.xy - _resolution/2.) / coef * 2.;
     uv = position.xy;
-    pixel_size = 1. / coef;
 
     gl_Position = res;
 }

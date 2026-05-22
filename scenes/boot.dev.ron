@@ -1,0 +1,3928 @@
+(
+    desc: (
+        eng: "",
+        rus: "",
+    ),
+    cam: (
+        look_at: (0.0, 0.0, 0.0),
+        alpha: -12.64823692991887,
+        beta: 1.333873109021461,
+        r: 3.5000000000001408,
+        offset_after_material: 0.000025,
+    ),
+    uniforms: ([
+        (
+            name: "room_size_x",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "room_size_y",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "room_size_z",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "portal_black_color_progress",
+            data: Progress(0.0),
+        ),
+        (
+            name: "teleport_light",
+            data: Bool(true),
+        ),
+        (
+            name: "mirror",
+            data: Bool(false),
+        ),
+        (
+            name: "pocket_size",
+            data: Float((
+                min: None,
+                max: None,
+                value: 5.0,
+            )),
+        ),
+        (
+            name: "cylinder_radius",
+            data: Float((
+                min: None,
+                max: None,
+                value: 6.4,
+            )),
+        ),
+        (
+            name: "cylinder_height",
+            data: Formula(("pocket_size-0.001")),
+        ),
+        (
+            name: "portal_size",
+            data: Progress(1.0),
+        ),
+        (
+            name: "color_mul",
+            data: Progress(0.5),
+        ),
+        (
+            name: "plane_rot",
+            data: Formula(("total_time*0.02")),
+        ),
+        (
+            name: "wheatley_down_brow",
+            data: Progress(0.3),
+        ),
+        (
+            name: "wheatley_up_brow",
+            data: Progress(0.3),
+        ),
+        (
+            name: "wheatley_tilt",
+            data: Float((
+                min: Some(-1.0),
+                max: Some(1.0),
+                value: 0.0,
+            )),
+        ),
+        (
+            name: "wheatley_side",
+            data: Float((
+                min: Some(-1.0),
+                max: Some(1.0),
+                value: 0.0,
+            )),
+        ),
+        (
+            name: "box_width",
+            data: Formula(("0.1+(16/9-0.1)*box_width_progress")),
+        ),
+        (
+            name: "box_width_progress",
+            data: Progress(0.0),
+        ),
+        (
+            name: "video_frame",
+            data: Progress(0.0),
+        ),
+        (
+            name: "wheatley_z",
+            data: Float((
+                min: None,
+                max: None,
+                value: -4.31,
+            )),
+        ),
+        (
+            name: "wheatley_roll",
+            data: Float((
+                min: Some(-1.0),
+                max: Some(1.0),
+                value: 0.0,
+            )),
+        ),
+        (
+            name: "teleport_light_cylinder",
+            data: Bool(true),
+        ),
+        (
+            name: "enable_cylinder",
+            data: Bool(true),
+        ),
+        (
+            name: "video1_frame",
+            data: Progress(0.0),
+        ),
+        (
+            name: "video2_frame",
+            data: Progress(0.0),
+        ),
+        (
+            name: "video3_frame",
+            data: Progress(0.0),
+        ),
+        (
+            name: "video4_frame",
+            data: Progress(0.0),
+        ),
+        (
+            name: "side_portal_size",
+            data: Progress(0.0),
+        ),
+    ]),
+    matrices: ([
+        (
+            name: "room_origin",
+            data: Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "object1",
+            data: Parametrized(
+                offset: (
+                    x: Value(0.0),
+                    y: Uniform(Some(Inline(Formula(("-5-pocket_size/2"))))),
+                    z: Value(0.0),
+                ),
+                rotate: (
+                    x: Value(1.5707963267948966),
+                    y: Value(0.0),
+                    z: Value(0.0),
+                ),
+                mirror: (
+                    x: Value(0.0),
+                    y: Value(0.0),
+                    z: Value(0.0),
+                ),
+                scale: Value(1.0),
+            ),
+        ),
+        (
+            name: "object2",
+            data: Parametrized(
+                offset: (
+                    x: Value(0.0),
+                    y: Uniform(Some(Inline(Formula(("-5-pocket_size/2"))))),
+                    z: Value(0.0),
+                ),
+                rotate: (
+                    x: Value(1.5707963267948966),
+                    y: Value(0.0),
+                    z: Value(3.141592653589793),
+                ),
+                mirror: (
+                    x: Value(0.0),
+                    y: Value(0.0),
+                    z: Value(0.0),
+                ),
+                scale: Value(1.0),
+            ),
+        ),
+        (
+            name: "cube",
+            data: Mul(
+                to: Some(Named("cube_local")),
+                what: Some(Inline(Parametrized(
+                    offset: (
+                        x: Value(0.0),
+                        y: Uniform(Some(Inline(Formula(("-5-pocket_size/2"))))),
+                        z: Value(0.0),
+                    ),
+                    rotate: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    mirror: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    scale: Value(1.0),
+                ))),
+            ),
+        ),
+        (
+            name: "cube_local",
+            data: Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 0.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+    ]),
+    objects: ([
+        (
+            name: "room_x+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Uniform(Some(Named("room_size_x"))),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(1.5707963267948966),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_z_u, room_size_y_u, room_yellow_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_x-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Uniform(Some(Inline(Formula(("-room_size_x"))))),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(1.5707963267948966),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_z_u, room_size_y_u, room_red_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_y+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Uniform(Some(Named("room_size_y"))),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_z_u, room_black_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_y-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Uniform(Some(Inline(Formula(("-room_size_y"))))),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_z_u, room_gray_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_z+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Named("room_size_z"))),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_y_u, room_blue_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_z-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("-room_size_z"))))),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_y_u, room_green_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "p1",
+            data: Flat(
+                kind: Portal(Some(Inline(Parametrized(
+                    offset: (
+                        x: Value(0.0),
+                        y: Value(-5.001),
+                        z: Value(0.0),
+                    ),
+                    rotate: (
+                        x: Value(1.5707963267948966),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    mirror: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    scale: Uniform(Some(Inline(Formula(("1.5 * portal_size"))))),
+                ))), Some(Inline(Parametrized(
+                    offset: (
+                        x: Value(0.0),
+                        y: Value(-2.0),
+                        z: Value(0.0),
+                    ),
+                    rotate: (
+                        x: Value(1.5707963267948966),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    mirror: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    scale: Uniform(Some(Inline(Formula(("1.5 * portal_size"))))),
+                )))),
+                is_inside: (("return is_inside_portal(
+  circle_distance(x, y), 
+  1.0, 
+  0.1,
+  0.02,
+  portal_blue_M, 
+  portal_orange_M, 
+  grid_gray_M, 
+  grid_gray_M, 
+  back,
+  first
+);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "p2",
+            data: Flat(
+                kind: Portal(Some(Inline(Parametrized(
+                    offset: (
+                        x: Value(0.0),
+                        y: Value(2.0),
+                        z: Value(0.0),
+                    ),
+                    rotate: (
+                        x: Value(1.5707963267948966),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    mirror: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    scale: Uniform(Some(Inline(Formula(("1.5 * portal_size"))))),
+                ))), Some(Inline(Parametrized(
+                    offset: (
+                        x: Value(0.0),
+                        y: Uniform(Some(Inline(Formula(("-5-pocket_size+0.001"))))),
+                        z: Value(0.0),
+                    ),
+                    rotate: (
+                        x: Value(1.5707963267948966),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    mirror: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    scale: Uniform(Some(Inline(Formula(("1.5 * portal_size"))))),
+                )))),
+                is_inside: (("return is_inside_portal(
+  circle_distance(x, y), 
+  1.0, 
+  0.1,
+  0.02,
+  portal_blue_M, 
+  portal_orange_M, 
+  grid_gray_M, 
+  grid_gray_M, 
+  back,
+  first
+);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "inf_planes",
+            data: Flat(
+                kind: Portal(Some(Inline(Simple(
+                    offset: (0.0, -5.0, 0.0),
+                    scale: 1.0,
+                    rotate: (1.5707963267948966, 0.0, 0.0),
+                    mirror: (false, false, false),
+                ))), Some(Inline(Parametrized(
+                    offset: (
+                        x: Value(0.0),
+                        y: Uniform(Some(Inline(Formula(("-5-pocket_size"))))),
+                        z: Value(0.0),
+                    ),
+                    rotate: (
+                        x: Value(1.5707963267948966),
+                        y: Value(0.0),
+                        z: Uniform(Some(Inline(Formula(("plane_rot"))))),
+                    ),
+                    mirror: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    scale: Value(1.0),
+                )))),
+                is_inside: (("if (teleport_light_u == 0) return grid_gray_M; else return TELEPORT; ")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "wheatley",
+            data: Complex(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Uniform(Some(Inline(Formula(("deg2rad(90)*wheatley_side"))))),
+                            y: Uniform(Some(Inline(Formula(("deg2rad(20)*wheatley_roll"))))),
+                            z: Uniform(Some(Inline(Formula(("deg2rad(10)*wheatley_tilt"))))),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Uniform(Some(Inline(Formula(("-5-pocket_size/2"))))),
+                            z: Uniform(Some(Named("wheatley_z"))),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(1.5707963267948966),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                )))),
+                intersect: (("vec3 op = -r.o.xyz;
+float b = dot(op, r.d.xyz);
+float det = b*b - dot(op, op) + 1.0;
+if (det < 0.) return scene_intersection_none;
+
+det = sqrt(det);
+float t = b - det;
+if (t < 0.) t = b + det;
+if (t < 0.) return scene_intersection_none;
+
+vec4 pos = r.o + r.d * t;
+vec3 n = normalize(pos.xyz);
+
+float u = atan(pos.z, pos.x) / PI;
+float v = atan(sqrt(pos.x * pos.x + pos.z * pos.z), pos.y) / PI;
+
+return SceneIntersection(wheatley_M, SurfaceIntersection(true, t, u, v, n), false);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "cube",
+            data: Complex(
+                kind: Simple(Some(Named("cube"))),
+                intersect: (("return intersect_box6(
+  vec3(1., 1., box_width_u),
+  r,
+  box_mat1_M,
+  box_mat2_M,
+  box_mat3_M,
+  box_mat4_M,
+  box_mat6_M,
+  box_mat6_M
+);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "black_box",
+            data: Complex(
+                kind: Simple(Some(Inline(Simple(
+                    offset: (0.0, 0.0, 10.0),
+                    scale: 1.0,
+                    rotate: (0.0, 0.0, 0.0),
+                    mirror: (false, false, false),
+                )))),
+                intersect: (("return intersect_box(r, triangle_black_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "disclaimer",
+            data: Flat(
+                kind: Simple(Some(Inline(Simple(
+                    offset: (0.0, 0.0, 13.9),
+                    scale: 4.0,
+                    rotate: (0.0, 3.141592653589793, 0.0),
+                    mirror: (false, false, false),
+                )))),
+                is_inside: (("if (max(abs(x), abs(y)) < 1.) {
+  return disclaimer_M;
+} else {
+  return NOT_INSIDE;
+}")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "black_box_portal",
+            data: Flat(
+                kind: Portal(Some(Inline(Simple(
+                    offset: (0.0, 0.0, 6.3),
+                    scale: 1.0,
+                    rotate: (0.0, 0.0, 0.0),
+                    mirror: (false, false, false),
+                ))), Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Uniform(Some(Inline(Formula(("-5-pocket_size/2"))))),
+                            z: Value(-2.48),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(3.141592653589793),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Uniform(Some(Named("side_portal_size"))),
+                    ))),
+                    what: Some(Inline(Simple(
+                        offset: (0.0, 0.0, 0.0),
+                        scale: 1.0,
+                        rotate: (0.0, 2.2689280275926285, 0.0),
+                        mirror: (false, false, false),
+                    ))),
+                )))),
+                is_inside: (("return is_inside_portal(
+  circle_distance(x, y), 
+  1.0, 
+  0.1,
+  0.02,
+  portal_green_M, 
+  portal_green_M, 
+  grid_gray_M, 
+  grid_gray_M, 
+  back,
+  first
+);")),
+                in_subspace: Normal,
+            ),
+        ),
+    ]),
+    cameras: ([]),
+    textures: ([
+        (
+            name: "texture",
+            data: ("scenes/img/monoportal.png"),
+        ),
+        (
+            name: "boot_dev_logo",
+            data: ("scenes/img/logo_full.png"),
+        ),
+        (
+            name: "border",
+            data: ("scenes/img/border.png"),
+        ),
+        (
+            name: "text",
+            data: ("scenes/img/text.png"),
+        ),
+        (
+            name: "disclaimer",
+            data: ("scenes/img/disclaimer.png"),
+        ),
+    ]),
+    materials: ([
+        (
+            name: "room_yellow",
+            data: Simple(
+                color: (0.8980392156862745, 0.8313725490196079, 0.25098039215686274),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_red",
+            data: Simple(
+                color: (0.9058823529411765, 0.29411764705882354, 0.29411764705882354),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_black",
+            data: Simple(
+                color: (0.050980392156862744, 0.050980392156862744, 0.050980392156862744),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_gray",
+            data: Simple(
+                color: (0.2235294117647059, 0.2235294117647059, 0.2235294117647059),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_blue",
+            data: Simple(
+                color: (0.3137254901960784, 0.38823529411764707, 0.9254901960784314),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_blue_texture",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(3.137254901960784e-1, 3.8823529411764707e-1, 9.254901960784314e-1), 5e-1, true, 1.0, 3e-1, false, true);
+result.mul_to_color *= texture(texture_tex, vec2(room_size_x_u + hit.u, room_size_x_u-hit.v) / (room_size_x_u * 2.0)).rgb;
+return result;")),
+            ),
+        ),
+        (
+            name: "room_green",
+            data: Simple(
+                color: (0.2627450980392157, 0.8470588235294118, 0.30196078431372547),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_green_texture",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(2.627450980392157e-1, 8.470588235294118e-1, 3.0196078431372547e-1), 5e-1, true, 1.0, 3e-1, false, true);
+result.mul_to_color *= texture(texture_tex, vec2(room_size_x_u + hit.u, room_size_x_u-hit.v) / (room_size_x_u * 2.0)).rgb;
+return result;")),
+            ),
+        ),
+        (
+            name: "portal_blue",
+            data: Simple(
+                color: (0.03529411764705882, 0.6431372549019608, 0.788235294117647),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "portal_blue_black",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple(hit, r, vec3(0.04732297,0.560074,0.68341726), 5e-1, false, 4e0, 3e-1);
+result.mul_to_color *= (1.0 - portal_black_color_progress_u);
+return result;")),
+            ),
+        ),
+        (
+            name: "portal_orange",
+            data: Simple(
+                color: (0.9294117647058824, 0.4235294117647059, 0.050980392156862744),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "portal_orange_black",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple(hit, r, vec3(0.6495146,0.2954198,0.03270938), 5e-1, false, 4e0, 3e-1);
+result.mul_to_color *= (1.0 - portal_black_color_progress_u);
+return result;")),
+            ),
+        ),
+        (
+            name: "mirror",
+            data: Reflect(
+                add_to_color: (1.0, 1.0, 1.0),
+            ),
+        ),
+        (
+            name: "grid_gray",
+            data: Simple(
+                color: (0.6666666666666666, 0.6666666666666666, 0.6666666666666666),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "triangle_black",
+            data: Simple(
+                color: (0.0, 0.0, 0.0),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "triangle_white",
+            data: Simple(
+                color: (0.7686274509803922, 0.7686274509803922, 0.7686274509803922),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_black",
+            data: Simple(
+                color: (0.0, 0.0, 0.0),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_0",
+            data: Simple(
+                color: (1.0, 0.24313725490196078, 0.24313725490196078),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_1",
+            data: Simple(
+                color: (0.24313725490196078, 1.0, 0.25098039215686274),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_2",
+            data: Simple(
+                color: (0.1843137254901961, 0.19607843137254902, 1.0),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_3",
+            data: Simple(
+                color: (1.0, 0.9764705882352941, 0.15294117647058825),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "wheatley",
+            data: Complex(
+                code: (("return material_simple(hit, r, wheatley_color(hit.u, hit.v), 5e-1, false, 4e0, 3e-1);")),
+            ),
+        ),
+        (
+            name: "box_mat1",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(0.1), 5e-1, true, 1.0, 3e-1, false, true);
+
+vec2 pos = vec2((box_width_u - hit.v) / (box_width_u) / 2., (1.-hit.u) / 2.);
+vec2 pos2 = vec2((box_width_u - hit.v*3910./3840.) / (box_width_u) / 2., (1. - hit.u*2230./2160.) / 2.);
+vec3 col1 = texture(video1_tex, pos2).rgb;
+vec3 col2 = texture(border_tex, pos).rgb;
+
+if (col2.x < 0.01) {
+  result.mul_to_color = col1;
+} else {
+  result.mul_to_color = col2;
+}
+
+result.mul_to_color *= result.mul_to_color;
+
+return result;")),
+            ),
+        ),
+        (
+            name: "box_mat2",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(0.1), 5e-1, true, 1.0, 3e-1, false, true);
+
+vec2 pos = vec2((box_width_u - hit.v) / (box_width_u) / 2., (1. - hit.u) / 2.);
+vec2 pos2 = vec2((box_width_u - hit.v*3910./3840.) / (box_width_u) / 2., (1. - hit.u*2230./2160.) / 2.);
+vec3 col1 = texture(video3_tex, pos2).rgb;
+vec3 col2 = texture(border_tex, pos).rgb;
+
+if (col2.x < 0.01) {
+  result.mul_to_color = col1;
+} else {
+  result.mul_to_color = col2;
+}
+
+result.mul_to_color *= result.mul_to_color;
+
+return result;")),
+            ),
+        ),
+        (
+            name: "box_mat6",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(0.1), 5e-1, true, 1.0, 3e-1, false, true);
+result.mul_to_color = texture(boot_dev_logo_tex, vec2(1. + hit.u, 1.-hit.v) / (2.0)).rgb;
+return result;")),
+            ),
+        ),
+        (
+            name: "box_mat3",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(0.1), 5e-1, true, 1.0, 3e-1, false, true);
+
+vec2 pos = vec2((box_width_u - hit.v) / (box_width_u) / 2., (1.-hit.u) / 2.);
+vec2 pos2 = vec2((box_width_u - hit.v*3910./3840.) / (box_width_u) / 2., (1. - hit.u*2230./2160.) / 2.);
+vec3 col1 = texture(video2_tex, pos2).rgb;
+vec3 col2 = texture(border_tex, pos).rgb;
+
+if (col2.x < 0.01) {
+  result.mul_to_color = col1;
+} else {
+  result.mul_to_color = col2;
+}
+
+result.mul_to_color *= result.mul_to_color;
+
+return result;")),
+            ),
+        ),
+        (
+            name: "box_mat4",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(0.1), 5e-1, true, 1.0, 3e-1, false, true);
+
+vec2 pos = vec2((box_width_u - hit.v) / (box_width_u) / 2., (1. - hit.u) / 2.);
+vec2 pos2 = vec2((box_width_u - hit.v*3910./3840.) / (box_width_u) / 2., (1. - hit.u*2230./2160.) / 2.);
+vec3 col1 = texture(video4_tex, pos2).rgb;
+vec3 col2 = texture(border_tex, pos).rgb;
+
+if (col2.x < 0.01) {
+  result.mul_to_color = col1;
+} else {
+  result.mul_to_color = col2;
+}
+
+result.mul_to_color *= result.mul_to_color;
+
+return result;")),
+            ),
+        ),
+        (
+            name: "disclaimer",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(0.1), 5e-1, true, 1.0, 3e-1, false, true);
+result.mul_to_color = texture(disclaimer_tex, vec2(1. + hit.u, 1.-hit.v) / (2.0)).rgb;
+return result;")),
+            ),
+        ),
+        (
+            name: "portal_green",
+            data: Simple(
+                color: (0.12156862745098039, 0.9019607843137255, 0.4823529411764706),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+    ]),
+    intersection_materials: ([
+        (
+            name: "object1_to_object2_portal",
+            data: ((("r = transform(object1_mat_inv, r);
+float len = length(r.d);
+r = normalize_ray(r);
+SurfaceIntersection i = intersect_object1(r);
+i.t /= len;
+
+if (!i.hit || enable_cylinder_u == 0) return SceneIntersectionWithMaterial(scene_intersection_none, material_next(vec3(1.), r)
+);
+
+mat3 object1_mat_custom = object1_transform_matrix(i.u, i.v);
+
+if (teleport_light_u == 0 || teleport_light_cylinder_u == 0) {
+    vec3 normal = adjugate(object1_mat) * object1_mat_custom * vec3(1., 0., 0.);
+    return SceneIntersectionWithMaterial(
+        SceneIntersection(grid_gray_M, SurfaceIntersection(true, i.t, i.u / PI, i.v / PI, normal), false),
+        material_next(vec3(1.), r)
+    );
+}
+
+mat3 object2_mat_custom = object2_transform_matrix(i.u, i.v);
+
+r.o = vec4(object2_uv(i.u, i.v), 1.);
+r.d = vec4(object2_mat_custom * (inverse(object1_mat_custom) * r.d.xyz), 0.);
+r = normalize_ray(r);
+
+//if (invert_ray_u == 1) {
+//    r.d = -r.d;
+//}
+
+r.o += r.d * _offset_after_material;
+
+r = transform(object2_mat, r);
+r = normalize_ray(r);
+
+SurfaceIntersection hit = SurfaceIntersection(true, i.t, i.u, i.v, object2_mat_custom * vec3(1., 0., 0.));
+return SceneIntersectionWithMaterial(
+    SceneIntersection(CUSTOM_MATERIAL, hit, false),
+    material_next(vec3(color_mul_u), r)
+);"))),
+        ),
+        (
+            name: "object2_to_object1_portal",
+            data: ((("r = transform(object2_mat_inv, r);
+float len = length(r.d);
+r = normalize_ray(r);
+SurfaceIntersection i = intersect_object2(r);
+i.t /= len;
+
+if (!i.hit || enable_cylinder_u == 0) return SceneIntersectionWithMaterial(scene_intersection_none, material_next(vec3(1.), r)
+);
+
+mat3 object2_mat_custom = object2_transform_matrix(i.u, i.v);
+
+if (teleport_light_u == 0 || teleport_light_cylinder_u == 0) {
+    vec3 normal = adjugate(object2_mat) * object2_mat_custom * vec3(1., 0., 0.);
+    return SceneIntersectionWithMaterial(
+        SceneIntersection(grid_gray_M, SurfaceIntersection(true, i.t, i.u / PI, i.v / PI, normal), false),
+        material_next(vec3(1.), r)
+    );
+}
+
+mat3 object1_mat_custom = object1_transform_matrix(i.u, i.v);
+
+r.o = vec4(object1_uv(i.u, i.v), 1.);
+r.d = vec4(object1_mat_custom * (inverse(object2_mat_custom) *  r.d.xyz), 0.);
+r = normalize_ray(r);
+
+//if (invert_ray_u == 1) {
+//    r.d = -r.d;
+//}
+
+r.o += r.d * _offset_after_material;
+
+r = transform(object1_mat, r);
+r = normalize_ray(r);
+
+SurfaceIntersection hit = SurfaceIntersection(true, i.t, i.u, i.v, object1_mat_custom * vec3(1., 0., 0.));
+return SceneIntersectionWithMaterial(
+    SceneIntersection(CUSTOM_MATERIAL, hit, false),
+    material_next(vec3(color_mul_u), r)
+);"))),
+        ),
+    ]),
+    library: ([
+        (
+            name: "common",
+            data: (("bool invert_if(bool value, bool condition) {
+  if (condition) {
+    return !value;
+  } else {
+    return value;
+  }
+}")),
+        ),
+        (
+            name: "room",
+            data: (("int is_inside_square(float x, float y, float sizex, float sizey, int material) {
+  if (abs(x) < sizex && abs(y) < sizey) {
+    return material;
+  } else {
+    return NOT_INSIDE;
+  }
+}
+")),
+        ),
+        (
+            name: "box",
+            data: (("SceneIntersection intersect_box(Ray r, int material) {
+vec3 rad = vec3(4., 4., 4.);
+vec3 m = 1.0/r.d.xyz;
+vec3 n = m*r.o.xyz;
+vec3 k = abs(m)*rad;
+vec3 t1 = -n - k;
+vec3 t2 = -n + k;
+
+float tN = max( max( t1.x, t1.y ), t1.z );
+float tF = min( min( t2.x, t2.y ), t2.z );
+
+float t = tN;
+if (tN < 0.0 && tF > 0.0) t = tF;
+
+if(tN > tF) return scene_intersection_none;
+
+if(t < 0.0) return scene_intersection_none;
+
+vec3 oN = -sign(r.d.xyz)*step(t1.yzx,t1.xyz)*step(t1.zxy,t1.xyz);
+
+vec3 pos = (r.o + r.d * t).xyz;
+
+vec2 uv = vec2(pos.x, pos.y);
+if (abs(abs(pos.x) - rad.x) < 0.0001) {
+  uv = vec2(pos.y, pos.z);
+}
+if (abs(abs(pos.y) - rad.y) < 0.0001) {
+  uv = vec2(pos.x, pos.z);
+}
+
+return SceneIntersection(material, SurfaceIntersection(true, t, uv.x, uv.y, normalize_normal(r.d.xyz, oN)), false);
+}")),
+        ),
+        (
+            name: "inverse",
+            data: (("mat3 transpose(mat3 matrix) {
+    vec3 row0 = matrix[0];
+    vec3 row1 = matrix[1];
+    vec3 row2 = matrix[2];
+    mat3 result = mat3(
+        vec3(row0.x, row1.x, row2.x),
+        vec3(row0.y, row1.y, row2.y),
+        vec3(row0.z, row1.z, row2.z)
+    );
+    return result;
+}
+
+float det(mat2 matrix) {
+    return matrix[0].x * matrix[1].y - matrix[0].y * matrix[1].x;
+}
+
+mat3 inverse(mat3 matrix) {
+    vec3 row0 = matrix[0];
+    vec3 row1 = matrix[1];
+    vec3 row2 = matrix[2];
+
+    vec3 minors0 = vec3(
+        det(mat2(row1.y, row1.z, row2.y, row2.z)),
+        det(mat2(row1.z, row1.x, row2.z, row2.x)),
+        det(mat2(row1.x, row1.y, row2.x, row2.y))
+    );
+    vec3 minors1 = vec3(
+        det(mat2(row2.y, row2.z, row0.y, row0.z)),
+        det(mat2(row2.z, row2.x, row0.z, row0.x)),
+        det(mat2(row2.x, row2.y, row0.x, row0.y))
+    );
+    vec3 minors2 = vec3(
+        det(mat2(row0.y, row0.z, row1.y, row1.z)),
+        det(mat2(row0.z, row0.x, row1.z, row1.x)),
+        det(mat2(row0.x, row0.y, row1.x, row1.y))
+    );
+
+    mat3 adj = transpose(mat3(minors0, minors1, minors2));
+
+    return (1.0 / dot(row0, minors0)) * adj;
+}")),
+        ),
+        (
+            name: "portal",
+            data: (("float circle_distance(float x, float y) {
+  return sqrt(sqr(x) + sqr(y));
+}
+
+float ellipse_distance(float x, float y) {
+  return sqrt(2.*sqr(x) + sqr(y));
+}
+
+float square_distance(float x, float y) {
+  return max(abs(x), abs(y));
+}
+
+float rect_distance(float x, float y, float a, float b) {
+  return max(abs(x)-a+1., abs(y)-b+1.);
+}
+
+float triangle_distance(float x, float y, float k1, float k2, float y1) {
+  return max(
+    (y-k1*x)/sqrt(1.0+sqr(k1)),
+  max(
+    (y-k2*x)/sqrt(1.0+sqr(k2)),
+    -y1 * y
+  ));
+}
+
+int is_inside_object(
+  float distance, 
+  float size, 
+  float border,
+  int material_inner, 
+  int material_border
+) {
+  if (distance < size) return material_inner;
+  if (distance < size + border) return material_border;
+  return NOT_INSIDE;
+}
+
+int is_inside_portal(
+  float distance, 
+  float size, 
+  float border,
+  float black_border,
+  int material_first, 
+  int material_second, 
+  int grid_material_first, 
+  int grid_material_second, 
+  bool back,
+  bool first
+) {
+  int material = material_second;
+  if (first) { material = material_first; }
+
+  if (distance < size) {
+    if (back) {
+      return material;      
+    } else {
+      if (teleport_light_u == 1) {
+      	if (mirror_u == 1) {
+          return mirror_M;
+        } else {
+          return TELEPORT;
+        }
+      } else {
+        if (first) {
+          return grid_material_first;
+        } else {
+          return grid_material_second;
+        }
+      }
+    }
+  }
+  int black_material = solid_black_M;
+  if (_black_border_disable == 1) black_material = material;
+  if (distance < size + black_border && !back) return black_material;
+  if (distance < size + black_border + border) return material;
+  if (distance < size + black_border + border + black_border) return black_material;
+
+  return NOT_INSIDE;
+}")),
+        ),
+        (
+            name: "wheatley",
+            data: (("vec3 rgb(int r, int g, int b) {
+  float r1 = float(r) / 255.;
+  float g1 = float(g) / 255.;
+  float b1 = float(b) / 255.;
+  return vec3(r1 * r1, g1 * g1, b1 * b1);
+}
+
+float dot_sph_dist(float u, float v, vec3 pos) {
+  vec3 pos2 = vec3(
+    sin(v*PI)*cos(u*PI),
+    sin(v*PI)*sin(u*PI),
+    cos(v*PI)
+  );
+  return dot(pos2, pos);
+}
+
+vec3 wheatley_color(float u, float v) {
+  float x = sin(v*PI)*cos(u*PI);
+  float y = sin(v*PI)*sin(u*PI);
+  float z = cos(v*PI);
+  vec3 pos = vec3(x, y, z);
+
+  vec3 color = vec3(1.);
+
+  float eye_size = 0.12;
+  float white_size = 0.1;
+  float light_blue_size = 0.3;
+  float blue_size = 0.6;
+  float eyelid_size_up = wheatley_up_brow_u;
+  float eyelid_size_down = wheatley_down_brow_u;
+  float border_size = 0.005;
+  float around_eye_size = 0.1;
+  float vertical_lines = 0.4;
+  float ass_size = 0.2;
+  float side_size = 0.75;
+  float straps_size = 0.006;
+  float side_corner_size = 0.32;
+
+  vec3 white = rgb(255, 255, 255);
+  vec3 light_blue = rgb(0, 255, 193);
+  vec3 blue = rgb(0, 107, 122);
+  vec3 black = rgb(0, 0, 0);
+  vec3 gray = rgb(128, 128, 128);
+  vec3 dark = rgb(50, 50, 50);
+  vec3 darker = rgb(20, 20, 20);
+
+  float eye = v / eye_size;
+  if (0. < eye && eye < white_size) color = white;
+  eye = (eye - white_size) / (1. - white_size);
+
+  if (0. < eye && eye < light_blue_size) color = mix(white, light_blue, eye/light_blue_size);
+  eye = (eye - light_blue_size) / (1. - light_blue_size);
+
+  if (0. < eye && eye < blue_size) color = mix(light_blue, blue, eye/blue_size);
+  eye = (eye - blue_size) / (1. - blue_size);
+
+  if (0. < eye && eye < 1.) color = color = mix(blue, black, eye);
+
+  if (v < eye_size && abs(x) < sin(eye_size*PI) && x > sin((eye_size * (1. - eyelid_size_up))*PI)) color = white;
+
+  if (v < eye_size && abs(x) < sin(eye_size*PI) && -x > sin((eye_size * (1. - eyelid_size_down))*PI)) color = white;
+
+  if (v < eye_size && x < sin((eye_size * (1. - eyelid_size_up))*PI) && x > sin((eye_size * (1. - eyelid_size_up) - border_size)*PI)) color = black;
+
+  if (v < eye_size && -x < sin((eye_size * (1. - eyelid_size_down))*PI) && -x > sin((eye_size * (1. - eyelid_size_down) - border_size)*PI)) color = black;
+
+  if (v > eye_size && v < eye_size + border_size) color = black;
+
+  if (v > eye_size + around_eye_size && v < eye_size + border_size + around_eye_size) color = black;
+
+  if (abs(y) < sin(border_size*PI)/2. && v > eye_size && v < eye_size + around_eye_size) color = black;
+
+  if (abs(y) > vertical_lines && abs(y) < vertical_lines + sin(border_size*PI) && v > eye_size + around_eye_size) color = black;
+
+  if (v > 1. - ass_size) {
+    color = dark;
+    if (abs(x*x) < straps_size || abs(y*y) < straps_size) color = darker;
+
+    if (abs(x - side_corner_size*0.7) < border_size * PI / 2. && -y > side_corner_size*0.7 - border_size * PI/2.) color = black;
+    if (abs(-y - side_corner_size*0.7) < border_size * PI / 2. && x > side_corner_size*0.7 - border_size * PI / 2.) color = black;
+  }
+  if (v > 1. - ass_size && v < 1. - ass_size + border_size) color = black;
+
+  if (abs(y*y) > side_size) {
+    color = dark;
+    if (abs(x*x) < straps_size || abs(y*y) < straps_size) color = darker;
+  }
+  if (abs(y*y) > side_size && abs(y*y) < side_size + sin(border_size * PI)) color = black;
+
+  if (v > eye_size && v < eye_size + around_eye_size) {
+    if (abs(x - side_corner_size) < border_size * PI / 2. && y > side_corner_size - border_size * PI/2.) color = black;
+    if (abs(y - side_corner_size) < border_size * PI / 2. && x > side_corner_size - border_size * PI / 2.) color = black;
+  }
+
+  float dot1 = dot_sph_dist(-0.5, -eye_size - around_eye_size/2., pos);
+  if (dot1 > 1. - 0.001 && dot1 < 1. - 0.001 + 0.0005) color = black;
+
+  if (dot_sph_dist(0.5, -eye_size - 0.03, pos) > 1. - 0.0005) color = black;
+  if (dot_sph_dist(0.57, -eye_size - 0.03, pos) > 1. - 0.0004) color = black;
+  if (dot_sph_dist(0.64, -eye_size - 0.03, pos) > 1. - 0.0003) color = black;
+  if (dot_sph_dist(0.71, -eye_size - 0.03, pos) > 1. - 0.0002) color = black;
+  if (dot_sph_dist(0.78, -eye_size - 0.03, pos) > 1. - 0.0001) color = black;
+
+  return color;
+}
+")),
+        ),
+        (
+            name: "cylinder",
+            data: (("SceneIntersection intersect_cylinder(Ray r, int material) {
+  float cylinder_radius = cylinder_radius_u;
+  float cylinder_height = cylinder_height_u;
+
+  float a = dot(r.d.xy, r.d.xy);
+  float b = 2.0 * dot(r.o.xy, r.d.xy);
+  float c = dot(r.o.xy, r.o.xy) - sqr(cylinder_radius);
+  float det = b*b - 4.0 * a * c;
+  if (det < 0.) return scene_intersection_none;
+
+  det = sqrt(det);
+
+  float t = (-b - det)/(2.*a);
+  vec4 pos = r.o + r.d * t;
+  float u = atan(pos.y, pos.x) * cylinder_radius;
+  float v = pos.z;
+  int result_material = NOT_INSIDE;
+  if (t > 0. && abs(v) < cylinder_height/2. && u > 0.) {
+    result_material = material;
+  }
+
+  if (t < 0. || result_material == NOT_INSIDE) {
+    t = (-b + det)/(2.*a);
+    pos = r.o + r.d * t;
+    u = atan(pos.y, pos.x) * cylinder_radius;
+    v = pos.z;
+    if (t > 0. && abs(v) < cylinder_height/2. && u > 0.) {
+      result_material = material;
+    }
+    if (t < 0. || result_material == NOT_INSIDE) {
+      return scene_intersection_none;
+    }
+  }
+
+  vec3 n = normalize(vec3(pos.xy, 0.));
+
+  return SceneIntersection(result_material, SurfaceIntersection(true, t, u, v, n), false);
+}")),
+        ),
+        (
+            name: "object1",
+            data: (("SurfaceIntersection intersect_object1(Ray r) {
+    SceneIntersection res = intersect_cylinder(r, TELEPORT);
+    return res.hit;
+}
+
+vec3 object1_uv(float u, float v) {
+    return vec3(cylinder_radius_u * cos(u/cylinder_radius_u), cylinder_radius_u * sin(u/cylinder_radius_u), v);
+}
+
+mat3 object1_transform_matrix(float u, float v) {
+    float offset = 0.001;
+
+    vec3 pos = object1_uv(u, v);
+
+    vec3 du = normalize(object1_uv(u + offset, v) - pos);
+    vec3 dv = normalize(object1_uv(u, v  + offset) - pos);
+    vec3 dr = -cross(du, dv);
+    return mat3(dr, dv, du);
+}
+")),
+        ),
+        (
+            name: "object2",
+            data: (("SurfaceIntersection intersect_object2(Ray r) {
+    return intersect_object1(r);
+}
+
+vec3 object2_uv(float u, float v) {
+    return object1_uv(u, v);
+}
+
+mat3 object2_transform_matrix(float u, float v) {
+    float offset = 0.001;
+
+    vec3 pos = object2_uv(u, v);
+
+    vec3 du = normalize(object2_uv(u + offset, v) - pos);
+    vec3 dv = normalize(object2_uv(u, v  + offset) - pos);
+    vec3 dr = cross(du, dv);
+    return mat3(dr, dv, du);
+}")),
+        ),
+        (
+            name: "box6",
+            data: (("// Face material mapping (recommended):
+//  +X, -X, +Y, -Y, +Z, -Z
+SceneIntersection intersect_box6(
+    vec3 rad, Ray r,
+    int matPX, int matNX,
+    int matPY, int matNY,
+    int matPZ, int matNZ
+) {
+  vec3 m = 1.0 / r.d.xyz;
+  vec3 n = m * r.o.xyz;
+  vec3 k = abs(m) * rad;
+  vec3 t1 = -n - k;
+  vec3 t2 = -n + k;
+
+  float tN = max(max(t1.x, t1.y), t1.z);
+  float tF = min(min(t2.x, t2.y), t2.z);
+
+  if (tN > tF) return scene_intersection_none;
+  if (tF < 0.0) return scene_intersection_none;
+
+  bool useExit = (tN < 0.0);
+  float t = useExit ? tF : tN;
+
+  // Correct normal for entry vs exit
+  vec3 oN = useExit
+    ? ( sign(r.d.xyz) * step(t2.xyz, t2.yzx) * step(t2.xyz, t2.zxy) )
+    : ( -sign(r.d.xyz) * step(t1.yzx, t1.xyz) * step(t1.zxy, t1.xyz) );
+
+  vec3 pos = (r.o + r.d * t).xyz;
+
+  const float EPS = 1e-4;
+
+  // Default: Z face (same as your default UV case)
+  int material = (pos.z > 0.0) ? matPZ : matNZ;
+  vec2 uv = vec2(pos.x, pos.y);
+  if (pos.z < 0.0) uv.x = -uv.x;
+
+  // X faces override
+  if (abs(abs(pos.x) - rad.x) < EPS) {
+    material = (pos.x > 0.0) ? matPX : matNX;
+
+    uv = vec2(pos.y, pos.z);
+    if (pos.x < 0.0) uv.x = -uv.x;
+  }
+
+  // Y faces override (matches your current priority on edges/corners)
+  if (abs(abs(pos.y) - rad.y) < EPS) {
+    material = (pos.y > 0.0) ? matPY : matNY;
+
+    uv = vec2(pos.x, pos.z);
+    if (pos.y > 0.0) uv.x = -uv.x;
+  }
+
+  return SceneIntersection(
+    material,
+    SurfaceIntersection(true, t, uv.x, uv.y, normalize_normal(r.d.xyz, oN)),
+    false
+  );
+}
+")),
+        ),
+    ]),
+    videos: ([
+        (
+            name: "video1",
+            data: (
+                path: "video1.mov",
+                uniform: Some(Named("video1_frame")),
+            ),
+        ),
+        (
+            name: "video2",
+            data: (
+                path: "video2.mov",
+                uniform: Some(Named("video2_frame")),
+            ),
+        ),
+        (
+            name: "video3",
+            data: (
+                path: "video3.mov",
+                uniform: Some(Named("video3_frame")),
+            ),
+        ),
+        (
+            name: "video4",
+            data: (
+                path: "video4.mov",
+                uniform: Some(Named("video4_frame")),
+            ),
+        ),
+    ]),
+    animations_filters: (
+        uniforms: {
+            "box_width": false,
+            "box_width_progress": true,
+            "color_mul": false,
+            "cylinder_height": false,
+            "cylinder_radius": false,
+            "enable_cylinder": false,
+            "mirror": false,
+            "plane_rot": true,
+            "pocket_size": false,
+            "portal_black_color_progress": false,
+            "portal_size": true,
+            "room_size_x": false,
+            "room_size_y": false,
+            "room_size_z": false,
+            "side_portal_size": true,
+            "teleport_light": false,
+            "teleport_light_cylinder": false,
+            "video1_frame": true,
+            "video2_frame": true,
+            "video3_frame": true,
+            "video4_frame": true,
+            "video_frame": false,
+            "wheatley_down_brow": true,
+            "wheatley_roll": true,
+            "wheatley_side": true,
+            "wheatley_tilt": true,
+            "wheatley_up_brow": true,
+            "wheatley_z": true,
+        },
+        matrices: {
+            "cube": false,
+            "cube_local": true,
+            "object1": false,
+            "object2": false,
+            "room_origin": false,
+        },
+        cameras: {},
+    ),
+    elements_descriptions: (
+        uniforms: {
+            "box_width_progress": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "plane_rot": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "portal_size": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "video1_frame": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "video2_frame": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "video3_frame": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "video4_frame": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "wheatley_down_brow": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "wheatley_roll": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "wheatley_side": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "wheatley_tilt": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "wheatley_up_brow": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "wheatley_z": (
+                help_description: None,
+                overrided_name: "",
+            ),
+        },
+        matrices: {
+            "cube_local": (
+                help_description: None,
+                overrided_name: "",
+            ),
+        },
+        cameras: {},
+    ),
+    user_uniforms: (
+        uniforms: {
+            "box_width": false,
+            "box_width_progress": false,
+            "color_mul": false,
+            "cylinder_height": false,
+            "cylinder_radius": false,
+            "enable_cylinder": false,
+            "mirror": false,
+            "plane_rot": false,
+            "pocket_size": false,
+            "portal_black_color_progress": false,
+            "portal_size": false,
+            "room_size_x": false,
+            "room_size_y": false,
+            "room_size_z": false,
+            "side_portal_size": false,
+            "teleport_light": false,
+            "teleport_light_cylinder": false,
+            "video1_frame": false,
+            "video2_frame": false,
+            "video3_frame": false,
+            "video4_frame": false,
+            "video_frame": false,
+            "wheatley_down_brow": false,
+            "wheatley_roll": false,
+            "wheatley_side": false,
+            "wheatley_tilt": false,
+            "wheatley_up_brow": false,
+            "wheatley_z": false,
+        },
+        matrices: {
+            "cube": false,
+            "cube_local": false,
+            "object1": false,
+            "object2": false,
+            "room_origin": false,
+        },
+    ),
+    animation_stages: ([]),
+    current_stage: Dev,
+    dev_stage: (
+        uniforms: {
+            "box_width": Formula(("0.1+(16/9-0.1)*box_width_progress")),
+            "box_width_progress": Progress(0.0),
+            "color_mul": Progress(0.5),
+            "cylinder_height": Formula(("pocket_size-0.001")),
+            "cylinder_radius": Float((
+                min: None,
+                max: None,
+                value: 6.4,
+            )),
+            "enable_cylinder": Bool(true),
+            "mirror": Bool(false),
+            "plane_rot": Formula(("total_time*0.02")),
+            "pocket_size": Float((
+                min: None,
+                max: None,
+                value: 5.0,
+            )),
+            "portal_black_color_progress": Progress(0.0),
+            "portal_size": Progress(1.0),
+            "room_size_x": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "room_size_y": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "room_size_z": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "side_portal_size": Progress(0.0),
+            "teleport_light": Bool(true),
+            "teleport_light_cylinder": Bool(true),
+            "video1_frame": Progress(0.0),
+            "video2_frame": Progress(0.0),
+            "video3_frame": Progress(0.0),
+            "video4_frame": Progress(0.0),
+            "video_frame": Progress(0.0),
+            "wheatley_down_brow": Progress(0.3),
+            "wheatley_roll": Float((
+                min: Some(-1.0),
+                max: Some(1.0),
+                value: 0.0,
+            )),
+            "wheatley_side": Float((
+                min: Some(-1.0),
+                max: Some(1.0),
+                value: 0.0,
+            )),
+            "wheatley_tilt": Float((
+                min: Some(-1.0),
+                max: Some(1.0),
+                value: 0.0,
+            )),
+            "wheatley_up_brow": Progress(0.3),
+            "wheatley_z": Float((
+                min: None,
+                max: None,
+                value: -4.31,
+            )),
+        },
+        matrices: {
+            "cube": Mul(
+                to: Some(Named("cube_local")),
+                what: Some(Inline(Parametrized(
+                    offset: (
+                        x: Value(0.0),
+                        y: Uniform(Some(Inline(Formula(("-5-pocket_size/2"))))),
+                        z: Value(0.0),
+                    ),
+                    rotate: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    mirror: (
+                        x: Value(0.0),
+                        y: Value(0.0),
+                        z: Value(0.0),
+                    ),
+                    scale: Value(1.0),
+                ))),
+            ),
+            "cube_local": Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 0.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "object1": Parametrized(
+                offset: (
+                    x: Value(0.0),
+                    y: Uniform(Some(Inline(Formula(("-5-pocket_size/2"))))),
+                    z: Value(0.0),
+                ),
+                rotate: (
+                    x: Value(1.5707963267948966),
+                    y: Value(0.0),
+                    z: Value(0.0),
+                ),
+                mirror: (
+                    x: Value(0.0),
+                    y: Value(0.0),
+                    z: Value(0.0),
+                ),
+                scale: Value(1.0),
+            ),
+            "object2": Parametrized(
+                offset: (
+                    x: Value(0.0),
+                    y: Uniform(Some(Inline(Formula(("-5-pocket_size/2"))))),
+                    z: Value(0.0),
+                ),
+                rotate: (
+                    x: Value(1.5707963267948966),
+                    y: Value(0.0),
+                    z: Value(3.141592653589793),
+                ),
+                mirror: (
+                    x: Value(0.0),
+                    y: Value(0.0),
+                    z: Value(0.0),
+                ),
+                scale: Value(1.0),
+            ),
+            "room_origin": Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        },
+    ),
+    animations: ([
+        (
+            name: "anim.0",
+            data: (
+                duration: 3.25,
+                animation_stage: Dev,
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: false,
+                use_start_cam_as_end: false,
+                cam_start: Some(Inline((
+                    look_at: Coordinate((0.0, 0.0, 0.0)),
+                    alpha: -12.559988784790054,
+                    beta: 1.4564672088623116,
+                    r: 3.850000000000149,
+                    in_subspace: false,
+                    free_movement: false,
+                    matrix: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+                ))),
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.0, 0.0, 0.0)),
+                    alpha: -13.376655960082955,
+                    beta: 1.4556045961632709,
+                    r: 3.850000000000149,
+                    in_subspace: false,
+                    free_movement: false,
+                    matrix: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out(early_finish(time, 0.8))")))),
+            ),
+        ),
+        (
+            name: "anim.1",
+            data: (
+                duration: 1.3333,
+                animation_stage: Dev,
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.0, 0.0, 0.0)),
+                    alpha: -13.4166553497314,
+                    beta: 0.01,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: false,
+                    matrix: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.3",
+            data: (
+                duration: 1.333,
+                animation_stage: Dev,
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: false,
+                use_start_cam_as_end: false,
+                cam_start: Some(Inline((
+                    look_at: Coordinate((0.0012030387207912158, 0.1823362796734935, -0.0013702450075857835)),
+                    alpha: -13.4166553497314,
+                    beta: 0.01,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+                ))),
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.0, -4.25, 0.0)),
+                    alpha: -12.216654968261683,
+                    beta: 1.5707963267948966,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (0.9999983012676239, 0.0, 0.0, 0.0, 0.0, 0.9965896606445313, 0.0, 0.0, 0.0, 0.0, 1.00000761449337, 0.0, -0.0000001869790217014916, -3.007846076508483, 0.00000007326850607475288, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out(early_finish(time, 0.9))")))),
+            ),
+        ),
+        (
+            name: "anim.4",
+            data: (
+                duration: 1.4,
+                animation_stage: Dev,
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.0, -4.25, 0.0)),
+                    alpha: -10.995574287564276,
+                    beta: 1.5271523753788807,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (0.9999983012676239, 0.0, 0.0, 0.0, 0.0, 0.9965896606445313, 0.0, 0.0, 0.0, 0.0, 1.00000761449337, 0.0, -0.0000001869790217014916, -3.007846076508483, 0.00000007326850607475288, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out(early_finish(time, 0.8))")))),
+            ),
+        ),
+        (
+            name: "anim.5",
+            data: (
+                duration: 2.3,
+                animation_stage: Dev,
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("lerp(0.3, 0.8, easing_in_out(early_finish(time, 0.1)))"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("sin(easing_in_out(later_start(time, 0.1))*pi()*6)"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.5.1",
+            data: (
+                duration: 2.3,
+                animation_stage: Dev,
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("0.8"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("-easing_in_out(time*2)*0.5"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("easing_plus_minus(time)*2"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.6",
+            data: (
+                duration: 1.0,
+                animation_stage: Dev,
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("0.8"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.0, -4.25, 0.0)),
+                    alpha: -9.455574134976384,
+                    beta: 0.01,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (0.9999983012676239, 0.0, 0.0, 0.0, 0.0, 0.9965896606445313, 0.0, 0.0, 0.0, 0.0, 1.00000761449337, 0.0, -0.0000001869790217014916, -3.007846076508483, 0.00000007326850607475288, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out(early_finish(later_start(time, 0.1), 0.9))")))),
+            ),
+        ),
+        (
+            name: "anim.7",
+            data: (
+                duration: 1.16,
+                animation_stage: RealAnimation("anim.6"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": Changed(Some(Inline(Formula(("1-easing_in_out(early_finish(time, 0.7))"))))),
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.8",
+            data: (
+                duration: 0.5,
+                animation_stage: RealAnimation("anim.6"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": Changed(Some(Inline(Formula(("0"))))),
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.03340750600880527, -4.25, -0.0010291487451555574)),
+                    alpha: -10.995574287564276,
+                    beta: 1.5707963267948966,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (0.9999983012676239, 0.0, 0.0, 0.0, 0.0, 0.9965896606445313, 0.0, 0.0, 0.0, 0.0, 1.00000761449337, 0.0, -0.0000001869790217014916, -3.007846076508483, 0.00000007326850607475288, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out(early_finish(time, 0.8))")))),
+            ),
+        ),
+        (
+            name: "anim.9",
+            data: (
+                duration: 1.6,
+                animation_stage: RealAnimation("anim.8"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": Changed(Some(Inline(Formula(("easing_in_out(early_finish(time, 0.1)*(1.-later_start(time, 0.9)))"))))),
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("sin(easing_in_out(later_start(time, 0.1))*pi()*6)"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.9.1",
+            data: (
+                duration: 2.6,
+                animation_stage: RealAnimation("anim.8"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.10",
+            data: (
+                duration: 2.4,
+                animation_stage: RealAnimation("anim.8"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("-easing_in_out(min(time/0.3, 1))*0.55"))))),
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Parametrized(
+                            offset: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(-4.4),
+                            ),
+                            rotate: (
+                                x: Value(0.0),
+                                y: Uniform(Some(Inline(Formula(("deg2rad(lerp(-30, 0, easing_elastic_out(later_start(time, 0.3))))"))))),
+                                z: Uniform(Some(Inline(Formula(("deg2rad(lerp(-30, 0, easing_elastic_out(later_start(time, 0.3))))"))))),
+                            ),
+                            mirror: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(0.0),
+                            ),
+                            scale: Uniform(Some(Inline(Formula(("easing_elastic_out(later_start(time, 0.3))*1.9"))))),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.03340750600880527, -4.25, -0.0010291487451555574)),
+                    alpha: -11.86823891356144,
+                    beta: 1.5707963267948966,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (0.9999983012676239, 0.0, 0.0, 0.0, 0.0, 0.9965896606445313, 0.0, 0.0, 0.0, 0.0, 1.00000761449337, 0.0, -0.0000001869790217014916, -3.007846076508483, 0.00000007326850607475288, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out(early_finish(time, 0.7))")))),
+            ),
+        ),
+        (
+            name: "anim.11",
+            data: (
+                duration: 0.6,
+                animation_stage: RealAnimation("anim.10"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": Changed(Some(Inline(Formula(("lerp(0, 1, easing_elastic_out(time*time))"))))),
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("-0.55"))))),
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Parametrized(
+                            offset: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(-4.4),
+                            ),
+                            rotate: (
+                                x: Value(0.0),
+                                y: Uniform(Some(Inline(Formula(("deg2rad(lerp(0, -90, easing_elastic_out(time*time)))"))))),
+                                z: Value(0.0),
+                            ),
+                            mirror: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(0.0),
+                            ),
+                            scale: Uniform(Some(Inline(Formula(("lerp(1.9, 1.4, easing_in_out(min(time*2, 1)))"))))),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.12",
+            data: (
+                duration: 7.8,
+                animation_stage: RealAnimation("anim.11"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": Changed(Some(Inline(Formula(("1"))))),
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": Changed(Some(Inline(Formula(("time"))))),
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": Changed(Some(Inline(Formula(("0*time"))))),
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("0.8-easing_in_out(min(time/0.1, 1))*0.5"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("lerp(-0.55, 0, 1-easing_in(min((1-time)/0.1, 1)))"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("sin(time*pi()*24)*0.5"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Simple(
+                            offset: (0.0, 0.0, -4.4),
+                            scale: 1.4,
+                            rotate: (0.0, 4.71238898038469, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.13",
+            data: (
+                duration: 1.0,
+                animation_stage: RealAnimation("anim.12"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("0.3"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.03340750600880527, -4.25, -0.0010291487451555574)),
+                    alpha: -11.50171977064263,
+                    beta: 1.5707963267948966,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (0.9999983012676239, 0.0, 0.0, 0.0, 0.0, 0.9965896606445313, 0.0, 0.0, 0.0, 0.0, 1.00000761449337, 0.0, -0.0000001869790217014916, -3.007846076508483, 0.00000007326850607475288, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOutFast,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.13.1",
+            data: (
+                duration: 4.0,
+                animation_stage: RealAnimation("anim.12"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("lerp(0.3, 0.5, easing_in_out(early_finish(time, 0.1)*(1-later_start(time, 0.9))))"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_up_brow": Changed(Some(Inline(Formula(("lerp(0.3, 0.5, easing_in_out(early_finish(time, 0.1)*(1-later_start(time, 0.9))))"))))),
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOutFast,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.14",
+            data: (
+                duration: 1.0,
+                animation_stage: RealAnimation("anim.13"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("easing_in_out_fast(min(time*1.25, 1))*(-0.55)"))))),
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Parametrized(
+                            offset: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(-4.4),
+                            ),
+                            rotate: (
+                                x: Uniform(Some(Inline(Formula(("deg2rad(lerp(0, 90, easing_elastic_out(later_start(time, 0.3)^2)))"))))),
+                                y: Value(4.71238898038469),
+                                z: Value(0.0),
+                            ),
+                            mirror: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(0.0),
+                            ),
+                            scale: Value(1.4),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: Some(false),
+                cam_any_start: None,
+                cam_any_end: Some("anim.13"),
+                cam_easing: InOut,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out_fast(early_finish(time, 0.6))")))),
+            ),
+        ),
+        (
+            name: "anim.15",
+            data: (
+                duration: 8.0,
+                animation_stage: RealAnimation("anim.14"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": Changed(Some(Inline(Formula(("time"))))),
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("lerp(-0.55, 0, 1-easing_in(min((1-time)/0.1, 1)))"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("sin(time*pi()*24)*0.5"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Simple(
+                            offset: (0.0, 0.0, -4.4),
+                            scale: 1.4,
+                            rotate: (1.5707963267948966, 4.71238898038469, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.16",
+            data: (
+                duration: 1.0,
+                animation_stage: RealAnimation("anim.13"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Simple(
+                            offset: (0.0, 0.0, -4.4),
+                            scale: 1.4,
+                            rotate: (1.5707963267948966, 4.71238898038469, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: false,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: Some(false),
+                use_any_cam_as_end: Some(true),
+                cam_any_start: Some("anim.13"),
+                cam_any_end: Some("anim.13"),
+                cam_easing: InOutFast,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.16.1",
+            data: (
+                duration: 1.5,
+                animation_stage: RealAnimation("anim.13.1"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Simple(
+                            offset: (0.0, 0.0, -4.4),
+                            scale: 1.4,
+                            rotate: (1.5707963267948966, 4.71238898038469, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: false,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: Some(false),
+                use_any_cam_as_end: Some(true),
+                cam_any_start: Some("anim.13.1"),
+                cam_any_end: Some("anim.13.1"),
+                cam_easing: InOutFast,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.16.2",
+            data: (
+                duration: 2.0,
+                animation_stage: RealAnimation("anim.13.1"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("lerp(0.3, 0.8, easing_in_out(early_finish(time, 0.1)))"))))),
+                    "wheatley_roll": Changed(Some(Inline(Formula(("easing_in_out(early_finish(time, 0.1)*(1.-later_start(time, 0.9)))*0.5"))))),
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("sin(easing_in_out(later_start(time, 0.05))*pi()*6)"))))),
+                    "wheatley_up_brow": Changed(Some(Inline(Formula(("0.3"))))),
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Simple(
+                            offset: (0.0, 0.0, -4.4),
+                            scale: 1.4,
+                            rotate: (1.5707963267948966, 4.71238898038469, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: false,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: Some(false),
+                use_any_cam_as_end: Some(true),
+                cam_any_start: Some("anim.13.1"),
+                cam_any_end: Some("anim.13.1"),
+                cam_easing: InOutFast,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.17",
+            data: (
+                duration: 1.0,
+                animation_stage: RealAnimation("anim.14"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("0.8"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Parametrized(
+                            offset: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(-4.4),
+                            ),
+                            rotate: (
+                                x: Uniform(Some(Inline(Formula(("deg2rad(lerp(90, 180, easing_elastic_out(later_start(time, 0.3)^2)))"))))),
+                                y: Value(4.71238898038469),
+                                z: Value(0.0),
+                            ),
+                            mirror: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(0.0),
+                            ),
+                            scale: Value(1.4),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: Some(true),
+                cam_any_start: None,
+                cam_any_end: Some("anim.14"),
+                cam_easing: InOutFast,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out_fast(early_finish(time, 0.6))")))),
+            ),
+        ),
+        (
+            name: "anim.18",
+            data: (
+                duration: 12.0,
+                animation_stage: RealAnimation("anim.15"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video3_frame": Changed(Some(Inline(Formula(("time"))))),
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("0.8"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Simple(
+                            offset: (0.0, 0.0, -4.4),
+                            scale: 1.4,
+                            rotate: (3.141592653589793, 4.71238898038469, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.19",
+            data: (
+                duration: 1.0,
+                animation_stage: RealAnimation("anim.18"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: Some(true),
+                cam_any_start: None,
+                cam_any_end: Some("anim.16"),
+                cam_easing: InOutFast,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.19.1",
+            data: (
+                duration: 1.6,
+                animation_stage: RealAnimation("anim.18"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOutFast,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.20",
+            data: (
+                duration: 1.0,
+                animation_stage: RealAnimation("anim.14"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": Changed(Some(Inline(Formula(("0.8"))))),
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Parametrized(
+                            offset: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(-4.4),
+                            ),
+                            rotate: (
+                                x: Uniform(Some(Inline(Formula(("deg2rad(lerp(180, 270, easing_elastic_out(later_start(time, 0.3)^2)))"))))),
+                                y: Value(4.71238898038469),
+                                z: Value(0.0),
+                            ),
+                            mirror: (
+                                x: Value(0.0),
+                                y: Value(0.0),
+                                z: Value(0.0),
+                            ),
+                            scale: Value(1.4),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: false,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: Some(false),
+                use_any_cam_as_end: Some(true),
+                cam_any_start: Some("anim.14"),
+                cam_any_end: Some("anim.14"),
+                cam_easing: InOutFast,
+                cam_easing_uniform: Some(Inline(Formula(("easing_in_out_fast(early_finish(time, 0.6))")))),
+            ),
+        ),
+        (
+            name: "anim.21",
+            data: (
+                duration: 9.0,
+                animation_stage: RealAnimation("anim.20"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video2_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video3_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video4_frame": Changed(Some(Inline(Formula(("time"))))),
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("lerp(-0.55, 0, 1-easing_in(min((1-time)/0.1, 1)))"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("sin(time*pi()*18)*0.5"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Simple(
+                            offset: (0.0, 0.0, -4.4),
+                            scale: 1.4,
+                            rotate: (4.71238898038469, 4.71238898038469, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.21.1",
+            data: (
+                duration: 3.6,
+                animation_stage: RealAnimation("anim.20"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video2_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video3_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video4_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": Changed(Some(Inline(Mul(
+                        to: Some(Inline(Simple(
+                            offset: (0.0, 0.0, -4.4),
+                            scale: 1.4,
+                            rotate: (4.71238898038469, 4.71238898038469, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                        what: Some(Inline(Simple(
+                            offset: (0.0, 0.0, 0.0),
+                            scale: 1.0,
+                            rotate: (0.0, 1.0471975511965976, 0.0),
+                            mirror: (false, false, false),
+                        ))),
+                    )))),
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.22",
+            data: (
+                duration: 2.5,
+                animation_stage: RealAnimation("anim.21"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": Changed(Some(Inline(Formula(("easing_elastic_out(time)"))))),
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": Changed(Some(Inline(Formula(("1"))))),
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("sin(time*pi()*12)*0.5"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: true,
+                cam_start: None,
+                cam_end: None,
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: Linear,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.23",
+            data: (
+                duration: 0.8,
+                animation_stage: RealAnimation("anim.22"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": Changed(Some(Inline(Formula(("1"))))),
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": Changed(Some(Inline(Formula(("0"))))),
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: Some(Inline((
+                    look_at: Coordinate((0.03340750600880527, -4.25, -0.0010291487451555574)),
+                    alpha: -13.264502315156905,
+                    beta: 1.5707963267948966,
+                    r: 0.18234539686735987,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (0.9999983012676239, 0.0, 0.0, 0.0, 0.0, 0.9965896606445313, 0.0, 0.0, 0.0, 0.0, 1.00000761449337, 0.0, -0.0000001869790217014916, -3.007846076508483, 0.00000007326850607475288, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: None,
+            ),
+        ),
+        (
+            name: "anim.24",
+            data: (
+                duration: 1.3,
+                animation_stage: RealAnimation("anim.23"),
+                uniforms: ({
+                    "box_width": CopyPrev,
+                    "box_width_progress": CopyPrev,
+                    "color_mul": CopyPrev,
+                    "cylinder_height": CopyPrev,
+                    "cylinder_radius": CopyPrev,
+                    "enable_cylinder": CopyPrev,
+                    "mirror": CopyPrev,
+                    "plane_rot": CopyPrev,
+                    "pocket_size": CopyPrev,
+                    "portal_black_color_progress": CopyPrev,
+                    "portal_size": CopyPrev,
+                    "room_size_x": CopyPrev,
+                    "room_size_y": CopyPrev,
+                    "room_size_z": CopyPrev,
+                    "side_portal_size": CopyPrev,
+                    "teleport_light": CopyPrev,
+                    "teleport_light_cylinder": CopyPrev,
+                    "video1_frame": CopyPrev,
+                    "video2_frame": CopyPrev,
+                    "video3_frame": CopyPrev,
+                    "video4_frame": CopyPrev,
+                    "video_frame": CopyPrev,
+                    "wheatley_down_brow": CopyPrev,
+                    "wheatley_roll": CopyPrev,
+                    "wheatley_side": CopyPrev,
+                    "wheatley_tilt": CopyPrev,
+                    "wheatley_up_brow": CopyPrev,
+                    "wheatley_z": CopyPrev,
+                }),
+                matrices: ({
+                    "cube": CopyPrev,
+                    "cube_local": CopyPrev,
+                    "object1": CopyPrev,
+                    "object2": CopyPrev,
+                    "room_origin": CopyPrev,
+                }),
+                use_prev_cam: true,
+                use_start_cam_as_end: false,
+                cam_start: None,
+                cam_end: Some(Inline((
+                    look_at: Coordinate((-5.018724649294132, -4.25, 4.2382130794284425)),
+                    alpha: -13.264502315156905,
+                    beta: 1.5707963267948966,
+                    r: 1.1152078619862935,
+                    in_subspace: false,
+                    free_movement: true,
+                    matrix: (0.6428305059671402, 0.0, -0.7662773132324219, 0.0, 0.0, 0.9965896606445313, 0.0, 0.0, 0.7659886032342911, 0.0, 0.6422996520996094, 0.0, 0.00018277002625013625, 9.492128849029541, 3.820377763905686, 1.0),
+                ))),
+                use_any_cam_as_start: None,
+                use_any_cam_as_end: None,
+                cam_any_start: None,
+                cam_any_end: None,
+                cam_easing: InOut,
+                cam_easing_uniform: None,
+            ),
+        ),
+    ]),
+    use_time: true,
+    skybox: None,
+)

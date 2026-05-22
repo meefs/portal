@@ -1,0 +1,1296 @@
+(
+    desc: (
+        eng: r##"# Basics
+
+This scene scene explained what is portal, where that idea come from and how to construct it. This scene may be relevant to those who didn't played Portal\/Portal 2.
+
+Very often portals is compared to the mirrors, therefore there is «Mirror» option which disables teleportation of light and objects and just replace portals with mirrors. "##,
+        rus: r##"# Основы
+
+В этой сцене рассказывается что такое портал, откуда он взялся и как его можно создать. Сцена подойдёт для тех кто не играл в Portal\/Portal 2.
+
+Очень часто порталы сравнивают с зеркалами, поэтому имеется опция «Mirror», которая позволяет отключить телепортацию света и объектов и просто превратить порталы в зеркала."##,
+    ),
+    cam: (
+        look_at: (0.0, 0.0, 0.0),
+        alpha: -22.515568054767535,
+        beta: 1.457043645457505,
+        r: 3.0448163954142236,
+        offset_after_material: 0.000025,
+    ),
+    uniforms: ([
+        (
+            name: "room_size_x",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "room_size_y",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "room_size_z",
+            data: Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+        ),
+        (
+            name: "portal_black_color_progress",
+            data: Progress(0.0),
+        ),
+        (
+            name: "teleport_light",
+            data: Bool(true),
+        ),
+        (
+            name: "mirror",
+            data: Bool(false),
+        ),
+        (
+            name: "distance",
+            data: Progress(0.0),
+        ),
+        (
+            name: "progress",
+            data: Progress(0.0),
+        ),
+    ]),
+    matrices: ([
+        (
+            name: "room_origin",
+            data: Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "chamber_origin",
+            data: Simple(
+                offset: (9.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "room_red",
+            data: Simple(
+                offset: (18.0, 0.0, 5.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "room_blue",
+            data: Simple(
+                offset: (18.0, 0.0, -5.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "portal_a",
+            data: Simple(
+                offset: (0.0, 0.0, -3.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "portal_b",
+            data: Parametrized(
+                offset: (
+                    x: Value(0.0),
+                    y: Value(0.0),
+                    z: Uniform(Some(Inline(Formula(("-min(distance, 0.5)*3"))))),
+                ),
+                rotate: (
+                    x: Value(4.71238898038469),
+                    y: Value(1.5707963267948966),
+                    z: Value(0.0),
+                ),
+                mirror: (
+                    x: Value(0.0),
+                    y: Value(0.0),
+                    z: Value(0.0),
+                ),
+                scale: Value(1.0),
+            ),
+        ),
+        (
+            name: "triangle",
+            data: Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 0.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+        ),
+        (
+            name: "triangle_teleported",
+            data: Teleport(
+                first_portal: Some(Named("portal_a")),
+                second_portal: Some(Named("portal_b")),
+                what: Some(Named("triangle")),
+            ),
+        ),
+        (
+            name: "triangle_teleported2",
+            data: Teleport(
+                first_portal: Some(Named("portal_a")),
+                second_portal: Some(Named("portal_b")),
+                what: Some(Named("triangle_teleported")),
+            ),
+        ),
+        (
+            name: "degree",
+            data: Parametrized(
+                offset: (
+                    x: Uniform(Some(Inline(Formula(("(-max(distance, 0.5)*3)+4.615"))))),
+                    y: Value(0.0),
+                    z: Uniform(Some(Inline(Formula(("-min(distance, 0.5)*3"))))),
+                ),
+                rotate: (
+                    x: Value(1.5707963267948966),
+                    y: Value(0.0),
+                    z: Value(1.5707963267948966),
+                ),
+                mirror: (
+                    x: Value(0.0),
+                    y: Value(0.0),
+                    z: Value(0.0),
+                ),
+                scale: Value(1.0),
+            ),
+        ),
+    ]),
+    objects: ([
+        (
+            name: "room_x+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Uniform(Some(Named("room_size_x"))),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(1.5707963267948966),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_z_u, room_size_y_u, room_yellow_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_x-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Uniform(Some(Inline(Formula(("-room_size_x"))))),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(1.5707963267948966),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_z_u, room_size_y_u, room_red_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_y+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Uniform(Some(Named("room_size_y"))),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_z_u, room_black_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_y-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Uniform(Some(Inline(Formula(("-room_size_y"))))),
+                            z: Value(0.0),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_z_u, room_gray_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_z+",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Named("room_size_z"))),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_y_u, room_blue_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "room_z-",
+            data: Flat(
+                kind: Simple(Some(Inline(Mul(
+                    to: Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("-room_size_z"))))),
+                        ),
+                        rotate: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    ))),
+                    what: Some(Named("room_origin")),
+                )))),
+                is_inside: (("return is_inside_square(x, y, room_size_x_u, room_size_y_u, room_green_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "portal",
+            data: Flat(
+                kind: Portal(Some(Named("portal_a")), Some(Named("portal_b"))),
+                is_inside: (("if ((portal_a_mat_inv * pos).z < 0.) {
+if (!first) {
+return NOT_INSIDE;
+}
+}
+
+float width = 1.0;
+float height = 2.0;
+float border = 0.1;
+
+if (abs(x) < width && abs(y) < height && !back) {
+  if (first) {
+    return grid_purple_M;
+  } else {
+    return grid_green_M;
+  }
+}
+
+if (abs(x) < width + border && abs(y) < height + border) {
+  if (!back) {
+    if (abs(x) > width + 0.015 || abs(y) > height + 0.015 )
+      if (first) {
+        return portal_blue_black_M;
+      } else {
+        return portal_orange_black_M;
+      }
+    } else {
+        if (first) {
+          return portal_blue_black_M;
+        } else {
+          return portal_orange_black_M;
+        }
+    }
+}
+
+if (abs(x) < width + border + 0.015 && abs(y) < height + border + 0.015) {
+  return solid_black_M;
+}
+
+
+return NOT_INSIDE;")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "triangle",
+            data: Flat(
+                kind: Simple(Some(Named("triangle"))),
+                is_inside: (("if ((portal_a_mat_inv * pos).z < 0. && mirror_u == 0) return NOT_INSIDE;
+
+return is_inside_triangle(x, y, 2.0, 2.0, 0.04, triangle_white_M, triangle_black_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "triangle_teleported",
+            data: Flat(
+                kind: Simple(Some(Named("triangle_teleported"))),
+                is_inside: (("if ((portal_a_mat_inv * pos).z < 0. || mirror_u == 1) return NOT_INSIDE;
+
+return is_inside_triangle(x, y, 2.0, 2.0, 0.04, triangle_white_M, triangle_black_M);")),
+                in_subspace: Normal,
+            ),
+        ),
+        (
+            name: "portal_teleported",
+            data: Flat(
+                kind: Portal(Some(Named("portal_a")), Some(Named("degree"))),
+                is_inside: (("if ((portal_b_mat_inv * pos).z > 0.) {
+return NOT_INSIDE;
+}
+
+float width = 1.0;
+float height = 2.0;
+float border = 0.1;
+
+if (abs(x) < width && abs(y) < height && !back) {
+  if (first) {
+    return grid_purple_M;
+  } else {
+    return grid_green_M;
+  }
+}
+
+if (abs(x) < width + border && abs(y) < height + border) {
+  if (!back) {
+    if (abs(x) > width + 0.015 || abs(y) > height + 0.015 )
+      if (first) {
+        return portal_blue_black_M;
+      } else {
+        return portal_orange_black_M;
+      }
+    } else {
+        if (first) {
+          return portal_blue_black_M;
+        } else {
+          return portal_orange_black_M;
+        }
+    }
+}
+
+if (abs(x) < width + border + 0.015 && abs(y) < height + border + 0.015) {
+  return solid_black_M;
+}
+
+
+return NOT_INSIDE;")),
+                in_subspace: Normal,
+            ),
+        ),
+    ]),
+    cameras: ([
+        (
+            name: "doorway",
+            data: (
+                look_at: Coordinate((9.0, -2.0, 0.0)),
+                alpha: -17.718989309446158,
+                beta: 1.145666594202485,
+                r: 3.8500000000000254,
+                in_subspace: false,
+                free_movement: false,
+                matrix: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+            ),
+        ),
+        (
+            name: "red",
+            data: (
+                look_at: MatrixCenter(Some(Named("room_red"))),
+                alpha: -5.171698394045233,
+                beta: 0.9444990941882027,
+                r: 3.850000000000043,
+                in_subspace: false,
+                free_movement: false,
+                matrix: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+            ),
+        ),
+        (
+            name: "blue",
+            data: (
+                look_at: MatrixCenter(Some(Named("room_blue"))),
+                alpha: -5.171698394045233,
+                beta: 0.9444990941882027,
+                r: 3.850000000000043,
+                in_subspace: false,
+                free_movement: false,
+                matrix: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+            ),
+        ),
+        (
+            name: "corner",
+            data: (
+                look_at: Coordinate((-4.0, 0.0, -4.0)),
+                alpha: -11.87364204233887,
+                beta: 1.350499582767487,
+                r: 6.2004635000000965,
+                in_subspace: false,
+                free_movement: false,
+                matrix: (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+            ),
+        ),
+    ]),
+    textures: ([
+        (
+            name: "texture",
+            data: ("scenes/img/monoportal.png"),
+        ),
+    ]),
+    materials: ([
+        (
+            name: "room_yellow",
+            data: Simple(
+                color: (0.8980392156862745, 0.8313725490196079, 0.25098039215686274),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_red",
+            data: Simple(
+                color: (0.9058823529411765, 0.29411764705882354, 0.29411764705882354),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_black",
+            data: Simple(
+                color: (0.050980392156862744, 0.050980392156862744, 0.050980392156862744),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_gray",
+            data: Simple(
+                color: (0.2235294117647059, 0.2235294117647059, 0.2235294117647059),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_blue",
+            data: Simple(
+                color: (0.3137254901960784, 0.38823529411764707, 0.9254901960784314),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_blue_texture",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(3.137254901960784e-1, 3.8823529411764707e-1, 9.254901960784314e-1), 5e-1, true, 1.0, 3e-1, false, true);
+result.mul_to_color *= texture(texture_tex, vec2(room_size_x_u + hit.u, room_size_x_u-hit.v) / (room_size_x_u * 2.0)).rgb;
+return result;")),
+            ),
+        ),
+        (
+            name: "room_green",
+            data: Simple(
+                color: (0.2627450980392157, 0.8470588235294118, 0.30196078431372547),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 1.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: true,
+            ),
+        ),
+        (
+            name: "room_green_texture",
+            data: Complex(
+                code: (("MaterialProcessing result = material_simple2(hit, r, vec3(2.627450980392157e-1, 8.470588235294118e-1, 3.0196078431372547e-1), 5e-1, true, 1.0, 3e-1, false, true);
+result.mul_to_color *= texture(texture_tex, vec2(room_size_x_u + hit.u, room_size_x_u-hit.v) / (room_size_x_u * 2.0)).rgb;
+return result;")),
+            ),
+        ),
+        (
+            name: "portal_blue_black",
+            data: Simple(
+                color: (0.5843137254901961, 0.43137254901960786, 1.0),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "portal_orange_black",
+            data: Simple(
+                color: (0.30980392156862746, 1.0, 0.396078431372549),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "mirror",
+            data: Reflect(
+                add_to_color: (1.0, 1.0, 1.0),
+            ),
+        ),
+        (
+            name: "grid_purple",
+            data: Simple(
+                color: (0.8392156862745098, 0.7529411764705882, 1.0),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: true,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "triangle_black",
+            data: Simple(
+                color: (0.043137254901960784, 0.043137254901960784, 0.043137254901960784),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "triangle_white",
+            data: Simple(
+                color: (0.7686274509803922, 0.7686274509803922, 0.7686274509803922),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_black",
+            data: Simple(
+                color: (0.0, 0.0, 0.0),
+                normal_coef: 0.5,
+                grid: false,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_0",
+            data: Simple(
+                color: (1.0, 0.24313725490196078, 0.24313725490196078),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_1",
+            data: Simple(
+                color: (0.24313725490196078, 1.0, 0.25098039215686274),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_2",
+            data: Simple(
+                color: (0.1843137254901961, 0.19607843137254902, 1.0),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 5.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "solid_3",
+            data: Simple(
+                color: (1.0, 0.9764705882352941, 0.15294117647058825),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: false,
+                grid3: false,
+            ),
+        ),
+        (
+            name: "grid_green",
+            data: Simple(
+                color: (0.7529411764705882, 1.0, 0.7843137254901961),
+                normal_coef: 0.5,
+                grid: true,
+                grid_scale: 4.0,
+                grid_coef: 0.3,
+                grid2: true,
+                grid3: false,
+            ),
+        ),
+    ]),
+    intersection_materials: ([]),
+    library: ([
+        (
+            name: "room",
+            data: (("int is_inside_square(float x, float y, float sizex, float sizey, int material) {
+  if (abs(x) < sizex && abs(y) < sizey) {
+    return material;
+  } else {
+    return NOT_INSIDE;
+  }
+}
+")),
+        ),
+        (
+            name: "box",
+            data: (("SceneIntersection intersect_box(Ray r, int material) {
+vec3 rad = vec3(4., 4., 4.);
+vec3 m = 1.0/r.d.xyz;
+vec3 n = m*r.o.xyz;
+vec3 k = abs(m)*rad;
+vec3 t1 = -n - k;
+vec3 t2 = -n + k;
+
+float tN = max( max( t1.x, t1.y ), t1.z );
+float tF = min( min( t2.x, t2.y ), t2.z );
+
+float t = tN;
+if (tN < 0.0 && tF > 0.0) t = tF;
+
+if(tN > tF) return scene_intersection_none;
+
+if(t < 0.0) return scene_intersection_none;
+
+vec3 oN = -sign(r.d.xyz)*step(t1.yzx,t1.xyz)*step(t1.zxy,t1.xyz);
+
+vec3 pos = (r.o + r.d * t).xyz;
+
+vec2 uv = vec2(pos.x, pos.y);
+if (abs(abs(pos.x) - rad.x) < 0.0001) {
+  uv = vec2(pos.y, pos.z);
+}
+if (abs(abs(pos.y) - rad.y) < 0.0001) {
+  uv = vec2(pos.x, pos.z);
+}
+
+return SceneIntersection(material, SurfaceIntersection(true, t, uv.x, uv.y, normalize_normal(r.d.xyz, oN)), false);
+}")),
+        ),
+        (
+            name: "triangle",
+            data: (("int is_inside_triangle(float x, float y, float angle, float width, float border, int inner_m, int border_m) {
+  float value = width * 0.7 - abs(x)*angle;
+  if (between(border, y, value - border * angle)) {
+    return inner_m;
+  } else if (between(0., y, value)) {
+    return border_m;
+  } else {
+    return NOT_INSIDE;
+  }
+}")),
+        ),
+        (
+            name: "portal",
+            data: (("float circle_distance(float x, float y) {
+  return sqrt(sqr(x) + sqr(y));
+}
+
+float ellipse_distance(float x, float y) {
+  return sqrt(2.*sqr(x) + sqr(y));
+}
+
+float square_distance(float x, float y) {
+  return max(abs(x), abs(y));
+}
+
+float rect_distance(float x, float y) {
+  return max(abs(x), abs(y) - 1.);
+}
+
+int is_inside_portal(
+  float distance, 
+  float size, 
+  float border,
+  float black_border,
+  int material_first, 
+  int material_second, 
+  int grid_material_first, 
+  int grid_material_second, 
+  bool back,
+  bool first
+) {
+  int material = material_second;
+  if (first) { material = material_first; }
+
+  if (distance < size) {
+    if (back) {
+      return material;      
+    } else {
+      if (teleport_light_u == 1) {
+      	if (mirror_u == 1) {
+          return mirror_M;
+        } else {
+          return TELEPORT;
+        }
+      } else {
+        if (first) {
+          return grid_material_first;
+        } else {
+          return grid_material_second;
+        }
+      }
+    }
+  }
+  int black_material = solid_black_M;
+  if (_black_border_disable == 1) black_material = material;
+  if (distance < size + black_border && !back) return black_material;
+  if (distance < size + black_border + border) return material;
+  if (distance < size + black_border + border + black_border) return black_material;
+
+  return NOT_INSIDE;
+}")),
+        ),
+    ]),
+    videos: ([]),
+    animations_filters: (
+        uniforms: {
+            "distance": true,
+            "mirror": true,
+            "portal_black_color_progress": true,
+            "progress": true,
+            "room_size_x": false,
+            "room_size_y": false,
+            "room_size_z": false,
+            "teleport_light": true,
+        },
+        matrices: {
+            "chamber_origin": false,
+            "degree": true,
+            "portal_a": true,
+            "portal_b": true,
+            "room_blue": false,
+            "room_origin": false,
+            "room_red": false,
+            "triangle": true,
+            "triangle_teleported": true,
+            "triangle_teleported2": false,
+        },
+        cameras: {
+            "blue": true,
+            "corner": false,
+            "doorway": false,
+            "red": true,
+        },
+    ),
+    elements_descriptions: (
+        uniforms: {
+            "distance": (
+                help_description: None,
+                overrided_name: "Distance",
+            ),
+            "mirror": (
+                help_description: None,
+                overrided_name: "Mirror",
+            ),
+            "portal_black_color_progress": (
+                help_description: None,
+                overrided_name: "",
+            ),
+            "progress": (
+                help_description: None,
+                overrided_name: "Triangle",
+            ),
+            "teleport_light": (
+                help_description: None,
+                overrided_name: "Teleport light",
+            ),
+        },
+        matrices: {
+            "portal_a": (
+                help_description: None,
+                overrided_name: "Blue portal",
+            ),
+            "portal_b": (
+                help_description: None,
+                overrided_name: "Orange portal",
+            ),
+            "triangle": (
+                help_description: None,
+                overrided_name: "Triangle",
+            ),
+        },
+        cameras: {
+            "blue": (
+                help_description: None,
+                overrided_name: "Blue world",
+            ),
+            "red": (
+                help_description: None,
+                overrided_name: "Red world",
+            ),
+        },
+    ),
+    user_uniforms: (
+        uniforms: {
+            "distance": false,
+            "mirror": true,
+            "portal_black_color_progress": false,
+            "progress": false,
+            "room_size_x": false,
+            "room_size_y": false,
+            "room_size_z": false,
+            "teleport_light": true,
+        },
+        matrices: {
+            "chamber_origin": false,
+            "degree": false,
+            "portal_a": false,
+            "portal_b": false,
+            "room_blue": false,
+            "room_origin": false,
+            "room_red": false,
+            "triangle": false,
+            "triangle_teleported": false,
+            "triangle_teleported2": false,
+        },
+    ),
+    animation_stages: ([
+        (
+            name: "push triangle",
+            data: (
+                name: (
+                    eng: "Push triangle",
+                    rus: "Push triangle",
+                ),
+                description: None,
+                uniforms: {
+                    "distance": FromDev,
+                    "mirror": FromDev,
+                    "portal_black_color_progress": FromDev,
+                    "progress": ProvidedToUser,
+                    "room_size_x": FromDev,
+                    "room_size_y": FromDev,
+                    "room_size_z": FromDev,
+                    "teleport_light": FromDev,
+                },
+                matrices: {
+                    "chamber_origin": FromDev,
+                    "degree": Changed(Some(Inline(Simple(
+                        offset: (0.0, 0.0, 0.0),
+                        scale: 0.0,
+                        rotate: (0.0, 0.593411945678072, 0.0),
+                        mirror: (false, false, false),
+                    )))),
+                    "portal_a": FromDev,
+                    "portal_b": FromDev,
+                    "room_blue": FromDev,
+                    "room_origin": FromDev,
+                    "room_red": FromDev,
+                    "triangle": Changed(Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("progress*4.5"))))),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    )))),
+                    "triangle_teleported": Changed(Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("(progress*4.5)-5.5"))))),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    )))),
+                    "triangle_teleported2": FromDev,
+                },
+                set_cam: None,
+                cams: {
+                    "blue": false,
+                    "red": false,
+                },
+                hidden: false,
+            ),
+        ),
+        (
+            name: "push triangle 2",
+            data: (
+                name: (
+                    eng: "Push triangle 2",
+                    rus: "Push triangle 2",
+                ),
+                description: None,
+                uniforms: {
+                    "distance": FromDev,
+                    "mirror": FromDev,
+                    "portal_black_color_progress": FromDev,
+                    "progress": ProvidedToUser,
+                    "room_size_x": FromDev,
+                    "room_size_y": FromDev,
+                    "room_size_z": FromDev,
+                    "teleport_light": FromDev,
+                },
+                matrices: {
+                    "chamber_origin": FromDev,
+                    "degree": Changed(Some(Inline(Simple(
+                        offset: (0.0, 0.0, 0.0),
+                        scale: 0.0,
+                        rotate: (0.0, 0.0, 0.0),
+                        mirror: (false, false, false),
+                    )))),
+                    "portal_a": FromDev,
+                    "portal_b": FromDev,
+                    "room_blue": FromDev,
+                    "room_origin": FromDev,
+                    "room_red": FromDev,
+                    "triangle": Changed(Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("-progress*12"))))),
+                        ),
+                        rotate: (
+                            x: Value(4.71238898038469),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    )))),
+                    "triangle_teleported": Changed(Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("(-progress*12)+12"))))),
+                        ),
+                        rotate: (
+                            x: Value(4.71238898038469),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    )))),
+                    "triangle_teleported2": FromDev,
+                },
+                set_cam: None,
+                cams: {
+                    "blue": false,
+                    "red": false,
+                },
+                hidden: false,
+            ),
+        ),
+        (
+            name: "self-intersect",
+            data: (
+                name: (
+                    eng: "Time Portal in Time Portal",
+                    rus: "",
+                ),
+                description: None,
+                uniforms: {
+                    "distance": ChangedAndToUser(Some(Inline(Progress(0.0)))),
+                    "mirror": FromDev,
+                    "portal_black_color_progress": FromDev,
+                    "progress": FromDev,
+                    "room_size_x": FromDev,
+                    "room_size_y": FromDev,
+                    "room_size_z": FromDev,
+                    "teleport_light": FromDev,
+                },
+                matrices: {
+                    "chamber_origin": FromDev,
+                    "degree": Changed(Some(Inline(Parametrized(
+                        offset: (
+                            x: Uniform(Some(Inline(Formula(("(-max(distance, 0.5)*3)+4.615"))))),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("-min(distance, 0.5)*3"))))),
+                        ),
+                        rotate: (
+                            x: Value(1.5707963267948966),
+                            y: Value(0.0),
+                            z: Value(1.5707963267948966),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    )))),
+                    "portal_a": FromDev,
+                    "portal_b": Changed(Some(Inline(Parametrized(
+                        offset: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Uniform(Some(Inline(Formula(("-min(distance, 0.5)*3"))))),
+                        ),
+                        rotate: (
+                            x: Value(4.71238898038469),
+                            y: Value(1.5707963267948966),
+                            z: Value(0.0),
+                        ),
+                        mirror: (
+                            x: Value(0.0),
+                            y: Value(0.0),
+                            z: Value(0.0),
+                        ),
+                        scale: Value(1.0),
+                    )))),
+                    "room_blue": FromDev,
+                    "room_origin": FromDev,
+                    "room_red": FromDev,
+                    "triangle": Changed(Some(Inline(Simple(
+                        offset: (0.0, 0.0, 0.0),
+                        scale: 0.0,
+                        rotate: (0.0, 0.0, 0.0),
+                        mirror: (false, false, false),
+                    )))),
+                    "triangle_teleported": FromDev,
+                    "triangle_teleported2": FromDev,
+                },
+                set_cam: None,
+                cams: {
+                    "blue": false,
+                    "red": false,
+                },
+                hidden: false,
+            ),
+        ),
+    ]),
+    current_stage: Animation("self-intersect"),
+    dev_stage: (
+        uniforms: {
+            "distance": Progress(1.0),
+            "mirror": Bool(false),
+            "portal_black_color_progress": Progress(0.0),
+            "progress": Progress(0.0),
+            "room_size_x": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "room_size_y": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "room_size_z": Float((
+                min: Some(0.0),
+                max: None,
+                value: 4.0,
+            )),
+            "teleport_light": Bool(true),
+        },
+        matrices: {
+            "chamber_origin": Simple(
+                offset: (9.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "degree": Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "portal_a": Simple(
+                offset: (0.0, 0.0, -3.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "portal_b": Simple(
+                offset: (0.0, 0.0, 3.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "room_blue": Simple(
+                offset: (18.0, 0.0, -5.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "room_origin": Simple(
+                offset: (0.0, 0.0, 0.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "room_red": Simple(
+                offset: (18.0, 0.0, 5.0),
+                scale: 1.0,
+                rotate: (0.0, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "triangle": Simple(
+                offset: (0.0, 0.0, 0.27),
+                scale: 1.0,
+                rotate: (4.71238898038469, 0.0, 0.0),
+                mirror: (false, false, false),
+            ),
+            "triangle_teleported": Teleport(
+                first_portal: Some(Named("portal_a")),
+                second_portal: Some(Named("portal_b")),
+                what: Some(Named("triangle")),
+            ),
+            "triangle_teleported2": Teleport(
+                first_portal: Some(Named("portal_a")),
+                second_portal: Some(Named("portal_b")),
+                what: Some(Named("triangle_teleported")),
+            ),
+        },
+    ),
+    animations: ([]),
+    use_time: false,
+    skybox: None,
+)

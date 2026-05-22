@@ -12,8 +12,6 @@ use egui::*;
 
 use serde::{Deserialize, Serialize};
 
-use crate::hlist;
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Ord, PartialOrd)]
 pub struct MatrixName<'a>(pub Cow<'a, str>);
 
@@ -187,7 +185,7 @@ impl Wrapper for ObjectId {
 }
 
 impl Object {
-    pub fn get_name(id: MatrixId, storage: &Storage2<Matrix>) -> Option<MatrixName> {
+    pub fn get_name(id: MatrixId, storage: &Storage2<Matrix>) -> Option<MatrixName<'_>> {
         storage.get_name(id).map(|name| {
             name.map(|name| MatrixName(Cow::Borrowed(name)))
                 .unwrap_or_else(|| MatrixName(Cow::Owned(format!("id{}", id.un_wrap()))))
@@ -441,5 +439,86 @@ impl StorageElem2 for Object {
         };
 
         result
+    }
+
+    fn duplicate_inline<F>(&self, _map_self: &mut F, input: &mut Self::Input) -> Self
+    where
+        F: FnMut(Self::IdWrapper, &mut Self::Input) -> Self::IdWrapper,
+    {
+        use Object::*;
+        use ObjectType::*;
+        let (_, (matrices, uniforms_input)) = input;
+        use crate::gui::unique_id::UniqueId;
+        use std::collections::BTreeMap;
+        let mut m_visited: BTreeMap<UniqueId, UniqueId> = BTreeMap::new();
+        match self.clone() {
+            DebugMatrix(a) => DebugMatrix(a.map(|id| {
+                matrices.duplicate_as_field_with_visited(id, uniforms_input, &mut m_visited)
+            })),
+            Flat {
+                kind,
+                is_inside,
+                in_subspace,
+            } => {
+                let kind = match kind {
+                    Simple(a) => Simple(a.map(|id| {
+                        matrices.duplicate_as_field_with_visited(id, uniforms_input, &mut m_visited)
+                    })),
+                    Portal(a, b) => Portal(
+                        a.map(|id| {
+                            matrices.duplicate_as_field_with_visited(
+                                id,
+                                uniforms_input,
+                                &mut m_visited,
+                            )
+                        }),
+                        b.map(|id| {
+                            matrices.duplicate_as_field_with_visited(
+                                id,
+                                uniforms_input,
+                                &mut m_visited,
+                            )
+                        }),
+                    ),
+                };
+                Flat {
+                    kind,
+                    is_inside,
+                    in_subspace,
+                }
+            }
+            Complex {
+                kind,
+                intersect,
+                in_subspace,
+            } => {
+                let kind = match kind {
+                    Simple(a) => Simple(a.map(|id| {
+                        matrices.duplicate_as_field_with_visited(id, uniforms_input, &mut m_visited)
+                    })),
+                    Portal(a, b) => Portal(
+                        a.map(|id| {
+                            matrices.duplicate_as_field_with_visited(
+                                id,
+                                uniforms_input,
+                                &mut m_visited,
+                            )
+                        }),
+                        b.map(|id| {
+                            matrices.duplicate_as_field_with_visited(
+                                id,
+                                uniforms_input,
+                                &mut m_visited,
+                            )
+                        }),
+                    ),
+                };
+                Complex {
+                    kind,
+                    intersect,
+                    in_subspace,
+                }
+            }
+        }
     }
 }

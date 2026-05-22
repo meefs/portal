@@ -17,8 +17,6 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::hlist;
-
 const ANIMATION_STAGE_NAME_SIZE: f64 = 100.0;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -53,7 +51,7 @@ impl<T: StorageElem2> Default for Animation<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct StageChanging<T: StorageElem2>(BTreeMap<T::IdWrapper, Animation<T>>);
+pub struct StageChanging<T: StorageElem2>(pub BTreeMap<T::IdWrapper, Animation<T>>);
 
 impl<T: StorageElem2> Default for StageChanging<T> {
     fn default() -> Self {
@@ -62,7 +60,7 @@ impl<T: StorageElem2> Default for StageChanging<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DevStageChanging<T: StorageElem2>(BTreeMap<T::IdWrapper, T>);
+pub struct DevStageChanging<T: StorageElem2>(pub BTreeMap<T::IdWrapper, T>);
 
 impl<T: StorageElem2> Default for DevStageChanging<T> {
     fn default() -> Self {
@@ -71,7 +69,7 @@ impl<T: StorageElem2> Default for DevStageChanging<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AnimationFilter<T: StorageElem2>(BTreeMap<T::IdWrapper, bool>);
+pub struct AnimationFilter<T: StorageElem2>(pub BTreeMap<T::IdWrapper, bool>);
 
 impl<T: StorageElem2> Default for AnimationFilter<T> {
     fn default() -> Self {
@@ -238,7 +236,7 @@ impl<T: StorageElem2> DevStageChanging<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GlobalStage<T: StorageElem2>(BTreeMap<T::IdWrapper, bool>);
+pub struct GlobalStage<T: StorageElem2>(pub BTreeMap<T::IdWrapper, bool>);
 
 impl<T: StorageElem2> Default for GlobalStage<T> {
     fn default() -> Self {
@@ -318,7 +316,7 @@ impl<T: StorageElem2> AnimationFilter<T> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ElementsDescription<T: StorageElem2>(BTreeMap<T::IdWrapper, ValueToUser>);
+pub struct ElementsDescription<T: StorageElem2>(pub BTreeMap<T::IdWrapper, ValueToUser>);
 
 impl<T: StorageElem2> Default for ElementsDescription<T> {
     fn default() -> Self {
@@ -346,9 +344,9 @@ impl<T: StorageElem2> ElementsDescription<T> {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ElementsDescriptions {
-    uniforms: ElementsDescription<AnyUniform>,
-    matrices: ElementsDescription<Matrix>,
-    cameras: ElementsDescription<Cam>,
+    pub uniforms: ElementsDescription<AnyUniform>,
+    pub matrices: ElementsDescription<Matrix>,
+    pub cameras: ElementsDescription<Cam>,
 }
 
 impl ElementsDescriptions {
@@ -370,9 +368,9 @@ impl ElementsDescriptions {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AnimationFilters {
-    uniforms: AnimationFilter<AnyUniform>,
-    matrices: AnimationFilter<Matrix>,
-    cameras: AnimationFilter<Cam>,
+    pub uniforms: AnimationFilter<AnyUniform>,
+    pub matrices: AnimationFilter<Matrix>,
+    pub cameras: AnimationFilter<Cam>,
 }
 
 impl AnimationFilters {
@@ -400,7 +398,7 @@ pub struct AnimationStage {
 
     original_cam_button: bool,
     pub set_cam: Option<Option<CameraId>>,
-    cams: BTreeMap<CameraId, bool>,
+    pub cams: BTreeMap<CameraId, bool>,
 
     #[serde(default)]
     pub hidden: bool,
@@ -420,7 +418,7 @@ impl<T: StorageElem2> ComboBoxChoosable for Animation<T> {
     fn get_number(&self) -> usize {
         use Animation::*;
         match self {
-            ProvidedToUser { .. } => 0,
+            ProvidedToUser => 0,
             FromDev => 1,
             Changed { .. } => 2,
             ChangedAndToUser { .. } => 3,
@@ -747,6 +745,61 @@ impl StorageElem2 for AnimationStage {
             self.uniforms.errors_count(uniforms, formulas_cache)
         }
     }
+
+    fn duplicate_inline<F>(
+        &self,
+        _map_self: &mut F,
+        (_cams, (_filters, (_global, (matrices, input)))): &mut Self::Input,
+    ) -> Self
+    where
+        F: FnMut(Self::IdWrapper, &mut Self::Input) -> Self::IdWrapper,
+    {
+        let mut new = self.clone();
+        use crate::gui::unique_id::UniqueId;
+        use std::collections::BTreeMap;
+
+        // Duplicate inline matrices used in stage changes
+        {
+            let mut m_visited: BTreeMap<UniqueId, UniqueId> = BTreeMap::new();
+            for part in new.matrices.0.values_mut() {
+                use crate::gui::animation::Animation::*;
+                match part {
+                    Changed(ref mut opt) | ChangedAndToUser(ref mut opt) => {
+                        if let Some(id) = *opt {
+                            let nid =
+                                matrices.duplicate_as_field_with_visited(id, input, &mut m_visited);
+                            *opt = Some(nid);
+                        }
+                    }
+                    ProvidedToUser | FromDev => {}
+                }
+            }
+        }
+
+        // Duplicate inline uniforms used in stage changes
+        {
+            let hpat![uniforms, formulas_cache] = input;
+            let mut u_visited: BTreeMap<UniqueId, UniqueId> = BTreeMap::new();
+            for part in new.uniforms.0.values_mut() {
+                use crate::gui::animation::Animation::*;
+                match part {
+                    Changed(ref mut opt) | ChangedAndToUser(ref mut opt) => {
+                        if let Some(id) = *opt {
+                            let nid = uniforms.duplicate_as_field_with_visited(
+                                id,
+                                formulas_cache,
+                                &mut u_visited,
+                            );
+                            *opt = Some(nid);
+                        }
+                    }
+                    ProvidedToUser | FromDev => {}
+                }
+            }
+        }
+
+        new
+    }
 }
 
 impl AnyUniform {
@@ -861,7 +914,7 @@ impl<T: StorageElem2> RealAnimationPart<T> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RealAnimationStageChanging<T: StorageElem2>(
-    BTreeMap<T::IdWrapper, RealAnimationPart<T>>,
+    pub BTreeMap<T::IdWrapper, RealAnimationPart<T>>,
 );
 
 impl<T: StorageElem2> Default for RealAnimationStageChanging<T> {
@@ -910,7 +963,7 @@ impl<T: StorageElem2 + std::fmt::Debug> RealAnimationStageChanging<T> {
             let enabled = *filter.0.entry(*id).or_default();
             let anim = self.0.entry(*id).or_default();
             if !global && enabled {
-                changed |= anim.egui(ui, storage, input, &name, data_id.with(id));
+                changed |= anim.egui(ui, storage, input, name, data_id.with(id));
             }
         }
 
@@ -922,7 +975,7 @@ impl<T: StorageElem2 + std::fmt::Debug> RealAnimationStageChanging<T> {
             let enabled = *filter.0.entry(*id).or_default();
             let anim = self.0.entry(*id).or_default();
             if global && enabled {
-                changed |= anim.egui(ui, storage, input, &name, data_id.with(id));
+                changed |= anim.egui(ui, storage, input, name, data_id.with(id));
             }
         }
 
@@ -986,6 +1039,8 @@ pub struct RealAnimation {
 
     #[serde(default)]
     pub cam_easing: Easing,
+    #[serde(default)]
+    pub cam_easing_uniform: Option<Option<UniformId>>,
 }
 
 impl Default for RealAnimation {
@@ -1004,6 +1059,7 @@ impl Default for RealAnimation {
             use_any_cam_as_end: None,
             cam_any_start: None,
             cam_any_end: None,
+            cam_easing_uniform: None,
         }
     }
 }
@@ -1083,13 +1139,34 @@ impl StorageElem2 for RealAnimation {
             changed.uniform |= egui_f64_positive(ui, &mut self.duration);
         });
 
-        changed.uniform |= egui_combo_box(
-            ui,
-            "Camera easing:",
-            100.,
-            &mut self.cam_easing,
-            data_id.with("cam_easing"),
-        );
+        ui.horizontal(|ui| {
+            ui.label("Camera easing:");
+            let mut test = self.cam_easing_uniform.is_some();
+            if ui.checkbox(&mut test, "Get from uniform").changed() {
+                if test {
+                    self.cam_easing_uniform = Some(None);
+                } else {
+                    self.cam_easing_uniform = None;
+                }
+            }
+            if self.cam_easing_uniform.is_none() {
+                ui.separator();
+                changed.uniform |=
+                    egui_combo_box(ui, "", 0., &mut self.cam_easing, data_id.with("cam_easing"));
+            }
+        });
+
+        if let Some(uniform_id) = self.cam_easing_uniform.as_mut() {
+            let hpat![uniforms, formulas_cache] = input;
+            changed |= uniforms.inline(
+                "",
+                0.0,
+                uniform_id,
+                ui,
+                formulas_cache,
+                data_id.with("cam_easing_uniform"),
+            );
+        }
 
         ui.separator();
 
@@ -1131,14 +1208,14 @@ impl StorageElem2 for RealAnimation {
         if self.use_any_cam_as_start.is_some() {
             self.use_prev_cam = false;
         }
-        ui.add_enabled_ui(!self.use_any_cam_as_start.is_some(), |ui| {
+        ui.add_enabled_ui(self.use_any_cam_as_start.is_none(), |ui| {
             changed.uniform |= egui_bool_named(ui, &mut self.use_prev_cam, "Use prev end cam");
         });
 
         if self.use_any_cam_as_end.is_some() {
             self.use_start_cam_as_end = false;
         }
-        ui.add_enabled_ui(!self.use_any_cam_as_end.is_some(), |ui| {
+        ui.add_enabled_ui(self.use_any_cam_as_end.is_none(), |ui| {
             changed.uniform |= egui_bool_named(
                 ui,
                 &mut self.use_start_cam_as_end,
@@ -1219,7 +1296,7 @@ impl StorageElem2 for RealAnimation {
                 }
             });
         });
-        if !self.use_prev_cam && !self.use_any_cam_as_start.is_some() {
+        if !self.use_prev_cam && self.use_any_cam_as_start.is_none() {
             changed |= cams.inline(
                 "Start cam:",
                 65.0,
@@ -1231,7 +1308,7 @@ impl StorageElem2 for RealAnimation {
         } else {
             self.cam_start = None;
         }
-        if !self.use_start_cam_as_end && !self.use_any_cam_as_end.is_some() {
+        if !self.use_start_cam_as_end && self.use_any_cam_as_end.is_none() {
             changed |= cams.inline(
                 "End cam:",
                 65.0,
@@ -1282,6 +1359,9 @@ impl StorageElem2 for RealAnimation {
         self.matrices.remove(matrices, input);
         let hpat![uniforms, formulas_cache] = input;
         self.uniforms.remove(uniforms, formulas_cache);
+        if let Some(Some(id)) = self.cam_easing_uniform {
+            uniforms.remove_as_field(id, formulas_cache);
+        }
     }
 
     fn errors_count<F: FnMut(Self::IdWrapper) -> usize>(
@@ -1293,6 +1373,75 @@ impl StorageElem2 for RealAnimation {
         self.matrices.errors_count(matrices, input) + {
             let hpat![uniforms, formulas_cache] = input;
             self.uniforms.errors_count(uniforms, formulas_cache)
+                + self
+                    .cam_easing_uniform
+                    .and_then(|opt| opt.map(|id| uniforms.errors_inline(id, formulas_cache)))
+                    .unwrap_or(0)
         }
+    }
+
+    fn duplicate_inline<F>(
+        &self,
+        _map_self: &mut F,
+        (_animation_stages, (_real_animations, (_cams, (_filters, (_global, (matrices, input)))))): &mut Self::Input,
+    ) -> Self
+    where
+        F: FnMut(Self::IdWrapper, &mut Self::Input) -> Self::IdWrapper,
+    {
+        let mut new = self.clone();
+        use crate::gui::unique_id::UniqueId;
+        use std::collections::BTreeMap;
+
+        // Duplicate inline matrices used in real animation changes
+        {
+            let mut m_visited: BTreeMap<UniqueId, UniqueId> = BTreeMap::new();
+            for part in new.matrices.0.values_mut() {
+                use crate::gui::animation::RealAnimationPart::*;
+                match part {
+                    Changed(ref mut opt) => {
+                        if let Some(id) = *opt {
+                            let nid =
+                                matrices.duplicate_as_field_with_visited(id, input, &mut m_visited);
+                            *opt = Some(nid);
+                        }
+                    }
+                    CopyPrev => {}
+                }
+            }
+        }
+
+        // Duplicate inline uniforms used in real animation changes
+        {
+            let hpat![uniforms, formulas_cache] = input;
+            let mut u_visited: BTreeMap<UniqueId, UniqueId> = BTreeMap::new();
+            for part in new.uniforms.0.values_mut() {
+                use crate::gui::animation::RealAnimationPart::*;
+                match part {
+                    Changed(ref mut opt) => {
+                        if let Some(id) = *opt {
+                            let nid = uniforms.duplicate_as_field_with_visited(
+                                id,
+                                formulas_cache,
+                                &mut u_visited,
+                            );
+                            *opt = Some(nid);
+                        }
+                    }
+                    CopyPrev => {}
+                }
+            }
+            if let Some(ref mut opt_id) = new.cam_easing_uniform {
+                if let Some(id) = opt_id {
+                    let nid = uniforms.duplicate_as_field_with_visited(
+                        *id,
+                        formulas_cache,
+                        &mut u_visited,
+                    );
+                    *opt_id = Some(nid);
+                }
+            }
+        }
+
+        new
     }
 }

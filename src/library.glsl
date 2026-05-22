@@ -2,7 +2,9 @@
 #version 300 es // !GLSL300!
 // Version can't be changed to upper versions because of WebGL.
 
+#ifdef GL_ES
 precision highp float;
+#endif
 
 uniform int _black_border_disable;
 
@@ -361,7 +363,7 @@ MaterialProcessing material_refract(
     return material_next(add_to_color, r);
 }
 
-MaterialProcessing material_teleport_transformed(Ray r) {
+MaterialProcessing material_teleport_transformed(Ray r,vec3 n) {
     // todo add add_gray_after_teleportation
     r.o += r.d * _offset_after_material;
     r = normalize_ray(r);
@@ -373,7 +375,7 @@ MaterialProcessing material_teleport(
     SurfaceIntersection hit, Ray r,
     mat4 teleport_matrix
 ) {
-    return material_teleport_transformed(transform(teleport_matrix, r));
+    return material_teleport_transformed(transform(teleport_matrix, r),hit.n);
 }
 
 MaterialProcessing material_change_subspace(Ray r) {

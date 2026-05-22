@@ -53,26 +53,26 @@ impl Default for CalculatedCam {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-enum CamLookAt {
+pub enum CamLookAt {
     MatrixCenter(Option<MatrixId>), // uses inline_only_name
     Coordinate(DVec3),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cam {
-    look_at: CamLookAt,
-    alpha: f64,
-    beta: f64,
-    r: f64,
+    pub look_at: CamLookAt,
+    pub alpha: f64,
+    pub beta: f64,
+    pub r: f64,
 
     #[serde(default)]
-    in_subspace: bool,
+    pub in_subspace: bool,
 
     #[serde(default)]
-    free_movement: bool,
+    pub free_movement: bool,
 
     #[serde(default)]
-    matrix: DMat4,
+    pub matrix: DMat4,
 }
 
 impl Default for CamLookAt {
@@ -402,5 +402,12 @@ impl StorageElem2 for Cam {
         _: Self::IdWrapper,
     ) -> usize {
         matches!(self.look_at, CamLookAt::MatrixCenter(None)) as usize
+    }
+
+    fn duplicate_inline<F>(&self, _map_self: &mut F, _input: &mut Self::Input) -> Self
+    where
+        F: FnMut(Self::IdWrapper, &mut Self::Input) -> Self::IdWrapper,
+    {
+        self.clone()
     }
 }

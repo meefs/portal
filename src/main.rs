@@ -1,4 +1,7 @@
+#[cfg(not(target_arch = "wasm32"))]
+use clap::{Args, Parser, Subcommand};
 use gesture_recognizer::*;
+use glam::Vec4Swizzles;
 use glam::{DMat4, DVec2, DVec3, DVec4};
 use macroquad::prelude::is_key_down;
 use macroquad::prelude::is_key_pressed;
@@ -22,6 +25,7 @@ use macroquad::prelude::{
     mouse_wheel, next_frame, screen_height, screen_width, set_default_camera, Conf,
     DrawTextureParams, MouseButton, Texture2D, BLACK, WHITE,
 };
+use portal::gui::scene_serialized::{normalize_pretty_output, pretty_config, SerializedScene};
 use portal::gui::scenes::Scenes;
 use portal::gui::{common::*, scene::*, texture::*};
 
@@ -44,6 +48,7 @@ struct RotateAroundCam {
     panini_param: f64,
 
     use_360_camera: bool,
+    use_180_camera: bool,
 
     inverse_x: bool,
     inverse_y: bool,
@@ -78,6 +83,11 @@ struct RotateAroundCam {
 
     do_not_teleport_one_frame: bool,
     send_camera_object_matrix: bool,
+
+    left_eye_matrix: DMat4,
+    right_eye_matrix: DMat4,
+    left_eye_in_subspace: bool,
+    right_eye_in_subspace: bool,
 }
 
 impl RotateAroundCam {
@@ -102,6 +112,7 @@ impl RotateAroundCam {
             panini_param: 1.0,
 
             use_360_camera: false,
+            use_180_camera: false,
 
             inverse_x: false,
             inverse_y: false,
@@ -134,6 +145,11 @@ impl RotateAroundCam {
 
             do_not_teleport_one_frame: false,
             send_camera_object_matrix: true,
+
+            left_eye_matrix: DMat4::IDENTITY,
+            right_eye_matrix: DMat4::IDENTITY,
+            left_eye_in_subspace: false,
+            right_eye_in_subspace: false,
         }
     }
 
@@ -444,19 +460,46 @@ impl RotateAroundCam {
                 changed = true;
             }
         });
-        for row in self.teleport_matrix.to_cols_array_2d() {
-            ui.horizontal(|ui| {
-                for mut value in row {
-                    ui.add_enabled(
-                        false,
-                        DragValue::new(&mut value)
-                            .speed(0.01)
-                            .min_decimals(0)
-                            .max_decimals(2),
-                    );
-                }
+        let visualize_matrix = |ui: &mut Ui, matrix: DMat4| {
+            for row in matrix.to_cols_array_2d() {
+                ui.horizontal(|ui| {
+                    for mut value in row {
+                        ui.add_enabled(
+                            false,
+                            DragValue::new(&mut value)
+                                .speed(0.01)
+                                .min_decimals(0)
+                                .max_decimals(2),
+                        );
+                    }
+                });
+            }
+        };
+        visualize_matrix(ui, self.teleport_matrix);
+        ui.separator();
+        egui::CollapsingHeader::new("Eye matrices")
+            .id_salt(0)
+            .show(ui, |ui| {
+                ui.label(format!(
+                    "Left eye: {}",
+                    if self.left_eye_in_subspace {
+                        "(in subspace)"
+                    } else {
+                        "(not in subspace)"
+                    }
+                ));
+                visualize_matrix(ui, self.left_eye_matrix);
+                ui.separator();
+                ui.label(format!(
+                    "Right eye: {}",
+                    if self.right_eye_in_subspace {
+                        "(in subspace)"
+                    } else {
+                        "(not in subspace)"
+                    }
+                ));
+                visualize_matrix(ui, self.right_eye_matrix);
             });
-        }
         ui.separator();
         ui.horizontal(|ui| {
             ui.label("α");
@@ -510,14 +553,38 @@ impl RotateAroundCam {
         ui.separator();
 
         ui.horizontal(|ui| {
+            ui.label("180 camera (VR180):");
+            changed |= check_changed(&mut self.use_180_camera, |is_use| {
+                ui.add(egui::Checkbox::new(is_use, ""));
+            });
+        });
+
+        ui.separator();
+
+        ui.horizontal(|ui| {
             ui.label("Panini projection:");
             changed |= check_changed(&mut self.use_panini_projection, |is_use| {
                 ui.add(egui::Checkbox::new(is_use, ""));
             });
-            if !self.use_panini_projection {
-                self.view_angle = macroquad::math::clamp(self.view_angle, 0.0, deg2rad(140.0));
-            }
         });
+
+        // Keep camera modes mutually exclusive.
+        // Panini is a regular-camera projection variant; 360/180 are equirectangular modes.
+        if self.use_panini_projection {
+            self.use_360_camera = false;
+            self.use_180_camera = false;
+        }
+        if self.use_360_camera {
+            self.use_panini_projection = false;
+            self.use_180_camera = false;
+        }
+        if self.use_180_camera {
+            self.use_panini_projection = false;
+            self.use_360_camera = false;
+        }
+        if !self.use_panini_projection {
+            self.view_angle = macroquad::math::clamp(self.view_angle, 0.0, deg2rad(140.0));
+        }
         ui.horizontal(|ui| {
             let is_use = self.use_panini_projection;
             ui.label("Panini parameter:");
@@ -654,6 +721,14 @@ pub fn average_images(mut images: Vec<Image>) -> Image {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct ViewportRect {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+}
+
 struct SceneRenderer {
     scene: Scene,
     cam: RotateAroundCam,
@@ -666,6 +741,16 @@ struct SceneRenderer {
     render_depth: i32,
     aa_count: i32,
     aa_start: i32,
+    draw_side_by_side: bool,
+    eye_distance: f64,
+    swap_eyes: bool,
+    draw_anaglyph: bool,
+    anaglyph_p: f64,
+    anaglyph_q: f64,
+    anaglyph_mode: bool,
+    draw_depth_map: bool,
+    depth_map_min: f64,
+    depth_map_max: f64,
     angle_color_disable: bool,
     grid_disable: bool,
     black_border_disable: bool,
@@ -678,6 +763,171 @@ struct SceneRenderer {
     current_fps: usize,
     current_motion_blur_frames: usize,
     texture_storage: Vec<Texture2D>,
+    #[cfg(not(target_arch = "wasm32"))]
+    video_runtimes: Vec<VideoRuntime>,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+struct VideoRuntime {
+    /// Name of the video entry in Scene.videos; must match texture name.
+    video_name: String,
+    /// Id of the video entry in Scene.videos.
+    video_id: portal::gui::video::VideoId,
+    /// Cached uniform id controlling the frame position.
+    uniform_id: Option<portal::gui::uniform::UniformId>,
+    /// Sorted list of PNG frame file paths.
+    frame_files: Vec<String>,
+    /// Index of the last frame uploaded to GPU.
+    last_frame_index: Option<usize>,
+    /// Index in SceneRenderer.texture_storage where current texture is kept.
+    texture_storage_index: Option<usize>,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn video_frames_dir(path: &str) -> Option<String> {
+    use std::path::Path;
+    let p = Path::new(path);
+    let stem = p.file_stem()?.to_string_lossy();
+    Some(format!("video_png/{}", stem))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn video_collect_frame_files(path: &str) -> Option<Vec<String>> {
+    use std::fs;
+    let dir = video_frames_dir(path)?;
+    let mut files: Vec<String> = fs::read_dir(&dir)
+        .ok()?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let p = entry.path();
+            if p.extension().and_then(|e| e.to_str()) == Some("png") {
+                Some(p.to_string_lossy().into_owned())
+            } else {
+                None
+            }
+        })
+        .collect();
+    files.sort();
+    if files.is_empty() {
+        None
+    } else {
+        Some(files)
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl VideoRuntime {
+    fn from_scene(scene: &Scene) -> Vec<Self> {
+        let mut result = Vec::new();
+
+        for (vid_id, name) in scene.videos.visible_elements() {
+            if let Some(video) = scene.videos.get_original(vid_id) {
+                if video.path.is_empty() {
+                    continue;
+                }
+                let uniform_id = video.uniform;
+                if uniform_id.is_none() {
+                    continue;
+                }
+                let frame_files = match video_collect_frame_files(&video.path) {
+                    Some(v) => v,
+                    None => continue,
+                };
+
+                result.push(Self {
+                    video_name: name.to_owned(),
+                    video_id: vid_id,
+                    uniform_id,
+                    frame_files,
+                    last_frame_index: None,
+                    texture_storage_index: None,
+                });
+            }
+        }
+
+        result
+    }
+
+    fn update(&mut self, renderer: &mut SceneRenderer) {
+        use portal::gui::texture::TextureName;
+
+        if self.frame_files.is_empty() {
+            return;
+        }
+
+        // Ensure we have a valid uniform id (re-resolve from scene if needed).
+        let uniform_id = match self.uniform_id.or_else(|| {
+            renderer
+                .scene
+                .videos
+                .get_original(self.video_id)
+                .and_then(|v| v.uniform)
+        }) {
+            Some(id) => {
+                self.uniform_id = Some(id);
+                id
+            }
+            None => return,
+        };
+
+        // Read current uniform value and clamp to [0, 1].
+        let value = match renderer
+            .scene
+            .uniforms
+            .get(uniform_id, &renderer.data.formulas_cache)
+        {
+            Some(v) => {
+                let f: f64 = v.into();
+                f.clamp(0.0, 1.0)
+            }
+            None => return,
+        };
+
+        let frame_count = self.frame_files.len();
+        if frame_count == 0 {
+            return;
+        }
+
+        let target_index = ((frame_count - 1) as f64 * value)
+            .round()
+            .clamp(0.0, (frame_count - 1) as f64) as usize;
+
+        // Avoid reload if frame didn't change.
+        if Some(target_index) == self.last_frame_index {
+            return;
+        }
+
+        let path = &self.frame_files[target_index];
+        let bytes = match std::fs::read(path) {
+            Ok(b) => b,
+            Err(_) => {
+                // Ignore IO errors for now; texture simply won't update.
+                return;
+            }
+        };
+
+        let texture = Texture2D::from_file_with_format(&bytes[..], None);
+
+        // Update material sampler (sampler name derived from texture name).
+        renderer
+            .material
+            .set_texture(&TextureName::name(&self.video_name), texture.clone());
+
+        // Keep texture alive in texture_storage, reusing the same slot to avoid leaks.
+        if let Some(index) = self.texture_storage_index {
+            if index < renderer.texture_storage.len() {
+                renderer.texture_storage[index] = texture;
+            } else {
+                renderer.texture_storage.push(texture);
+                self.texture_storage_index = Some(renderer.texture_storage.len() - 1);
+            }
+        } else {
+            renderer.texture_storage.push(texture);
+            self.texture_storage_index = Some(renderer.texture_storage.len() - 1);
+        }
+
+        self.last_frame_index = Some(target_index);
+    }
 }
 
 impl SceneRenderer {
@@ -686,6 +936,7 @@ impl SceneRenderer {
             reload_textures: true,
             for_prefer_variable: cfg!(not(target_arch = "wasm32")),
             use_300_version: cfg!(not(target_arch = "wasm32")),
+            disable_anaglyph: true,
             ..Default::default()
         };
 
@@ -773,6 +1024,16 @@ impl SceneRenderer {
             render_depth: 100,
             aa_count: 1,
             aa_start: 0,
+            draw_side_by_side: false,
+            eye_distance: 0.07,
+            swap_eyes: false,
+            draw_anaglyph: false,
+            anaglyph_p: 0.29,
+            anaglyph_q: 0.06,
+            anaglyph_mode: false,
+            draw_depth_map: false,
+            depth_map_min: 0.,
+            depth_map_max: 10.,
             angle_color_disable: false,
             grid_disable: false,
             black_border_disable: false,
@@ -785,6 +1046,8 @@ impl SceneRenderer {
             current_fps: 60,
             current_motion_blur_frames: 1,
             texture_storage: vec![],
+            #[cfg(not(target_arch = "wasm32"))]
+            video_runtimes: Vec::new(),
         };
 
         result
@@ -796,6 +1059,7 @@ impl SceneRenderer {
         result.offset_after_material = result.scene.cam.offset_after_material;
         result.reload_textures().await;
         result.scene.run_animations = false;
+        result.teleport_eye_matrices();
         result
     }
 
@@ -819,6 +1083,16 @@ impl SceneRenderer {
                         self.data.texture_errors.0.insert(name.to_string(), file);
                     }
                 }
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                // Rebuild video runtimes and immediately upload current frames
+                // so that videos are visible right after recompilation / scene load.
+                let mut runtimes = VideoRuntime::from_scene(&self.scene);
+                for v in &mut runtimes {
+                    v.update(self);
+                }
+                self.video_runtimes = runtimes;
             }
         }
     }
@@ -844,6 +1118,102 @@ impl SceneRenderer {
         Some(Ok(()))
     }
 
+    fn teleport_eye_matrices(&mut self) {
+        if !((self.draw_anaglyph || self.draw_side_by_side) && self.cam.allow_teleport) {
+            return;
+        }
+
+        let eye_distance = if self.swap_eyes {
+            -self.eye_distance
+        } else {
+            self.eye_distance
+        };
+
+        let mut process_one_eye = |eye_vector: DVec4| -> (DMat4, bool) {
+            let start_pos = self.cam.get_cam_pos();
+            let direction_pos = (self.cam.get_matrix() * eye_vector).xyz();
+            let mut result = (
+                DMat4::from_translation(direction_pos - start_pos) * self.cam.get_matrix(),
+                self.cam.in_subspace,
+            );
+
+            let (teleported, _, change_subspace) =
+                self.teleport_external_ray(start_pos, direction_pos);
+            if let Some(new_pos) = teleported {
+                let mut res = |cam_teleport_dx: f64| -> Option<()> {
+                    result.0 = self.teleport_matrix(
+                        result.0,
+                        start_pos,
+                        direction_pos,
+                        new_pos,
+                        cam_teleport_dx,
+                    )?;
+                    if change_subspace {
+                        result.1 = !self.cam.in_subspace;
+                    }
+                    Some(())
+                };
+                if res(0.001) == None
+                    && res(0.0001) == None
+                    && res(0.00001) == None
+                    && res(0.000001) == None
+                {
+                    // ok
+                }
+            }
+
+            result
+        };
+
+        let res1 = process_one_eye(DVec4::new(-eye_distance, 0., 0., 1.));
+        let res2 = process_one_eye(DVec4::new(eye_distance, 0., 0., 1.));
+        (self.cam.left_eye_matrix, self.cam.left_eye_in_subspace) = res1;
+        (self.cam.right_eye_matrix, self.cam.right_eye_in_subspace) = res2;
+    }
+
+    fn teleport_matrix(
+        &mut self,
+        matrix: DMat4,
+        start_pos: DVec3,
+        direction_pos: DVec3,
+        actual_teleported_pos: DVec3,
+        dx: f64,
+    ) -> Option<DMat4> {
+        let i = (matrix * DVec4::new(1., 0., 0., 0.) * dx).truncate();
+        let i = self
+            .teleport_external_ray(start_pos + i, direction_pos + i)
+            .0?
+            - actual_teleported_pos;
+        let i = DVec4::from((i, 0.)) / dx;
+
+        let j = (matrix * DVec4::new(0., 1., 0., 0.) * dx).truncate();
+        let j = self
+            .teleport_external_ray(start_pos + j, direction_pos + j)
+            .0?
+            - actual_teleported_pos;
+        let j = DVec4::from((j, 0.)) / dx;
+
+        let k = (matrix * DVec4::new(0., 0., 1., 0.) * dx).truncate();
+        let k = self
+            .teleport_external_ray(start_pos + k, direction_pos + k)
+            .0?
+            - actual_teleported_pos;
+        let k = DVec4::from((k, 0.)) / dx;
+
+        let pos = DVec4::new(0., 0., 0., 1.);
+
+        let new_mat = DMat4::from_cols(i, j, k, pos);
+
+        let pos = actual_teleported_pos
+            - (new_mat
+                * matrix.inverse()
+                * DVec4::new(direction_pos.x, direction_pos.y, direction_pos.z, 1.))
+            .truncate();
+        let pos = DVec4::from((pos, 1.));
+
+        Some(DMat4::from_cols(i, j, k, pos))
+    }
+
     fn teleport_camera(&mut self, prev_cam: RotateAroundCam) {
         if self.cam.do_not_teleport_one_frame {
             self.cam.do_not_teleport_one_frame = false;
@@ -866,41 +1236,13 @@ impl SceneRenderer {
                 return;
             }
             let mut res = |cam_teleport_dx: f64| -> Option<()> {
-                let cam_matrix = self.cam.teleport_matrix;
-
-                let i = (cam_matrix * DVec4::new(1., 0., 0., 0.) * cam_teleport_dx).truncate();
-                let i = self
-                    .teleport_external_ray(self.cam.prev_cam_pos + i, cam_pos + i)
-                    .0?
-                    - new_pos;
-                let i = DVec4::from((i, 0.)) / cam_teleport_dx;
-
-                let j = (cam_matrix * DVec4::new(0., 1., 0., 0.) * cam_teleport_dx).truncate();
-                let j = self
-                    .teleport_external_ray(self.cam.prev_cam_pos + j, cam_pos + j)
-                    .0?
-                    - new_pos;
-                let j = DVec4::from((j, 0.)) / cam_teleport_dx;
-
-                let k = (cam_matrix * DVec4::new(0., 0., 1., 0.) * cam_teleport_dx).truncate();
-                let k = self
-                    .teleport_external_ray(self.cam.prev_cam_pos + k, cam_pos + k)
-                    .0?
-                    - new_pos;
-                let k = DVec4::from((k, 0.)) / cam_teleport_dx;
-
-                let pos = DVec4::new(0., 0., 0., 1.);
-
-                let new_mat = DMat4::from_cols(i, j, k, pos);
-
-                let pos = new_pos
-                    - (new_mat
-                        * cam_matrix.inverse()
-                        * DVec4::new(cam_pos.x, cam_pos.y, cam_pos.z, 1.))
-                    .truncate();
-                let pos = DVec4::from((pos, 1.));
-
-                self.cam.teleport_matrix = DMat4::from_cols(i, j, k, pos);
+                self.cam.teleport_matrix = self.teleport_matrix(
+                    self.cam.teleport_matrix,
+                    self.cam.prev_cam_pos,
+                    cam_pos,
+                    new_pos,
+                    cam_teleport_dx,
+                )?;
 
                 if change_subspace {
                     self.cam.in_subspace = !self.cam.in_subspace;
@@ -927,6 +1269,18 @@ impl SceneRenderer {
         self.material.set_uniform("_resolution", (width, height));
         self.material
             .set_uniform("_camera", self.cam.get_matrix().as_f32());
+        self.material
+            .set_uniform("_camera_left_eye", self.cam.left_eye_matrix.as_f32());
+        self.material
+            .set_uniform("_camera_right_eye", self.cam.right_eye_matrix.as_f32());
+        self.material.set_uniform(
+            "_left_eye_in_subspace",
+            self.cam.left_eye_in_subspace as i32,
+        );
+        self.material.set_uniform(
+            "_right_eye_in_subspace",
+            self.cam.right_eye_in_subspace as i32,
+        );
         self.material.set_uniform(
             "_camera_mul_inv",
             self.cam.teleport_matrix.inverse().as_f32(),
@@ -944,26 +1298,53 @@ impl SceneRenderer {
         self.material
             .set_uniform("_use_360_camera", self.cam.use_360_camera as i32);
         self.material
+            .set_uniform("_use_180_camera", self.cam.use_180_camera as i32);
+        self.material
             .set_uniform("_ray_tracing_depth", self.render_depth);
         self.material.set_uniform("_aa_count", self.aa_count);
         self.material.set_uniform("_aa_start", self.aa_start);
         self.material
+            .set_uniform("_draw_side_by_side", self.draw_side_by_side as i32);
+        self.material
+            .set_uniform("_draw_anaglyph", self.draw_anaglyph as i32);
+        self.material
+            .set_uniform("_anaglyph_p", self.anaglyph_p as f32);
+        self.material
+            .set_uniform("_anaglyph_q", self.anaglyph_q as f32);
+        self.material
+            .set_uniform("_anaglyph_mode", self.anaglyph_mode as i32);
+        self.material
+            .set_uniform("_draw_depth_map", self.draw_depth_map as i32);
+        self.material
+            .set_uniform("_depth_map_min", self.depth_map_min as f32);
+        self.material
+            .set_uniform("_depth_map_max", self.depth_map_max as f32);
+        self.material
             .set_uniform("_offset_after_material", self.offset_after_material as f32);
 
-        let scale = self
-            .cam
-            .get_matrix()
-            .to_cols_array_2d()
-            .into_iter()
-            .take(3)
-            .map(|x| DVec4::from(x).length())
-            .sum::<f64>()
-            / 3.0;
+        let calc_scale = |matrix: &DMat4| -> f64 {
+            matrix
+                .to_cols_array_2d()
+                .into_iter()
+                .take(3)
+                .map(|x| DVec4::from(x).length())
+                .sum::<f64>()
+                / 3.0
+        };
+
         self.material
-            .set_uniform("_t_start", self.gray_t_start as f32 * scale as f32);
+            .set_uniform("_t_start", self.gray_t_start as f32);
+        self.material
+            .set_uniform("_t_end", (self.gray_t_start + self.gray_t_size) as f32);
+        self.material
+            .set_uniform("_camera_scale", calc_scale(&self.cam.get_matrix()) as f32);
         self.material.set_uniform(
-            "_t_end",
-            (self.gray_t_start + self.gray_t_size) as f32 * scale as f32,
+            "_left_eye_scale",
+            calc_scale(&self.cam.left_eye_matrix) as f32,
+        );
+        self.material.set_uniform(
+            "_right_eye_scale",
+            calc_scale(&self.cam.right_eye_matrix) as f32,
         );
 
         self.material
@@ -1025,14 +1406,6 @@ impl SceneRenderer {
         } else {
             return (None, encounter_object, change_subspace);
         }
-    }
-
-    fn draw_full_screen(&mut self) {
-        self.scene.set_uniforms(&mut self.material, &mut self.data);
-        self.set_uniforms(screen_width(), screen_height());
-        gl_use_material(&self.material);
-        draw_rectangle(0., 0., screen_width(), screen_height(), WHITE);
-        gl_use_default_material();
     }
 
     fn draw_texture(&mut self, width: f32, height: f32, flip_y: bool) {
@@ -1146,6 +1519,7 @@ impl SceneRenderer {
         if self.cam.get_matrix() != self.prev_cam.get_matrix() {
             self.teleport_camera(self.prev_cam.clone());
         }
+        self.teleport_eye_matrices();
         self.prev_cam = self.cam.clone();
 
         memory.data.insert_persisted(
@@ -1158,10 +1532,90 @@ impl SceneRenderer {
                 .formulas_cache
                 .set_camera_matrix(self.cam.get_matrix());
         }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let mut runtimes = Vec::new();
+            std::mem::swap(&mut runtimes, &mut self.video_runtimes);
+            for mut video in runtimes {
+                video.update(self);
+                self.video_runtimes.push(video);
+            }
+        }
     }
 
     fn egui_rendering_settings(&mut self, ui: &mut Ui) -> WhatChanged {
         let mut changed = WhatChanged::default();
+        ui.label("3D rendering options:");
+        if self.data.disable_anaglyph {
+            ui.label("Anaglyph is disabled, can't control it. Enable it lower in the settings and recompile/reload the scene.");
+        } else {
+            changed.uniform |= ui
+                .checkbox(&mut self.draw_anaglyph, "Draw anaglyph")
+                .changed();
+            ui.label("By default anaglyph is grayscale for better visuals. Colorful anaglyph may produce a lot of ghosting.");
+            changed.uniform |= ui
+                .checkbox(&mut self.anaglyph_mode, "Colorful anaglyph")
+                .changed();
+            ui.label("If you have ghosting on your anaglyph glasses (you can see other's eye image), you can tweaks these two values to get minimal ghosting. Note that blue lens may have no ghosting at all, but red lens may have a bit. Also note that ghosting may always be presented on pitch black background (in pocket dimension for example). So, anaglyph works best in room scenes.");
+            ui.horizontal(|ui| {
+                ui.label("Anaglyph P (red lens):");
+                changed.uniform |= ui.add(
+                    egui::Slider::new(&mut self.anaglyph_p, 0.15..=0.6)
+                        .clamping(egui::widgets::SliderClamping::Always)
+                        .min_decimals(0)
+                        .max_decimals(3),
+                ).changed();
+            });
+            ui.horizontal(|ui| {
+                ui.label("Anaglyph Q (blue lens):");
+                changed.uniform |= ui.add(
+                    egui::Slider::new(&mut self.anaglyph_q, 0.0..=0.25)
+                        .clamping(egui::widgets::SliderClamping::Always)
+                        .min_decimals(0)
+                        .max_decimals(3),
+                ).changed();
+            });
+        }
+        changed.uniform |= ui
+            .checkbox(&mut self.draw_side_by_side, "Draw side-by-side")
+            .changed();
+        ui.label("Disable \"Swap eyes\" when you render video. Enable it when you want to look at 3D image with your eyes crossed.");
+        changed.uniform |= ui.checkbox(&mut self.swap_eyes, "Swap eyes").changed();
+        ui.horizontal(|ui| {
+            ui.label("Eye distance:");
+            changed.uniform |= egui_f64_positive(ui, &mut self.eye_distance);
+        });
+        ui.separator();
+        changed.uniform |= ui
+            .checkbox(&mut self.draw_depth_map, "Draw current depth map")
+            .changed();
+        if self.draw_depth_map {
+            ui.horizontal(|ui| {
+                ui.label("Minimum depth:");
+                changed.uniform |= check_changed(&mut self.depth_map_min, |value| {
+                    ui.add(
+                        DragValue::new(value)
+                            .speed(0.1)
+                            .range(0.0..=1_000_000.0)
+                            .min_decimals(0)
+                            .max_decimals(3),
+                    );
+                });
+            });
+            ui.horizontal(|ui| {
+                ui.label("Maximum depth:");
+                changed.uniform |= check_changed(&mut self.depth_map_max, |value| {
+                    ui.add(
+                        DragValue::new(value)
+                            .speed(0.1)
+                            .range(0.0..=1_000_000.0)
+                            .min_decimals(0)
+                            .max_decimals(3),
+                    );
+                });
+            });
+        }
+        ui.separator();
         ui.label("Render depth:");
         changed.uniform |= check_changed(&mut self.render_depth, |depth| {
             ui.add(
@@ -1170,12 +1624,17 @@ impl SceneRenderer {
         });
         ui.label("(Max count of ray bounce after portal, reflect, refract)");
         ui.separator();
-        ui.label("Antialiasing count:");
-        changed.uniform |= check_changed(&mut self.aa_count, |count| {
-            ui.add(
-                egui::Slider::new(count, 1..=16).clamping(egui::widgets::SliderClamping::Always),
-            );
-        });
+        if self.data.disable_antialiasing {
+            ui.label("Antialiasing is disabled, can't control it. Enable it lower in the settings and recompile/reload the scene.");
+        } else {
+            ui.label("Antialiasing count:");
+            changed.uniform |= check_changed(&mut self.aa_count, |count| {
+                ui.add(
+                    egui::Slider::new(count, 1..=16)
+                        .clamping(egui::widgets::SliderClamping::Always),
+                );
+            });
+        }
         ui.separator();
         ui.label("Offset after material:");
         changed.uniform |= check_changed(&mut self.offset_after_material, |offset| {
@@ -1193,10 +1652,14 @@ impl SceneRenderer {
         ui.separator();
         ui.label("Darkening by distance:");
         changed.uniform |= egui_bool(ui, &mut self.darken_by_distance);
-        ui.label("Darkening after distance:");
-        changed.uniform |= egui_f64_positive(ui, &mut self.gray_t_start);
-        ui.label("Darkening size:");
-        changed.uniform |= egui_f64_positive(ui, &mut self.gray_t_size);
+        ui.horizontal(|ui| {
+            ui.label("Darkening after distance:");
+            changed.uniform |= egui_f64_positive(ui, &mut self.gray_t_start);
+        });
+        ui.horizontal(|ui| {
+            ui.label("Darkening size:");
+            changed.uniform |= egui_f64_positive(ui, &mut self.gray_t_size);
+        });
         ui.separator();
         ui.label("Disable darkening by angle with normal:");
         changed.uniform |= egui_bool(ui, &mut self.angle_color_disable);
@@ -1220,6 +1683,9 @@ impl SceneRenderer {
         ui.separator();
         ui.label("Improve compilation speed time 4: (uses 300 glsl version instead of 100)");
         changed.shader |= egui_bool(ui, &mut self.data.use_300_version);
+        ui.separator();
+        ui.label("Improve compilation speed time 5: (disable anaglyph)");
+        changed.shader |= egui_bool(ui, &mut self.data.disable_anaglyph);
         changed
     }
 
@@ -1243,6 +1709,9 @@ impl SceneRenderer {
             "v2.spiral.7",
             "v2.spiral.9",
             "v2.spaaaace.0",
+            "v4.golden.0",
+            "v4.golden.1",
+            "v4.golden.2",
         ]
         .contains(&animation_name)
         {
@@ -1281,12 +1750,6 @@ impl SceneRenderer {
         Some(())
     }
 
-    fn use_animation_stage(&mut self, name: &str, memory: &mut egui::Memory) {
-        self.scene.init_animation_by_name(name, memory).unwrap();
-        self.update_inner_variables(name);
-        self.update(memory, 0.);
-    }
-
     fn render_animation(
         &mut self,
         duration_seconds: f32,
@@ -1298,8 +1761,10 @@ impl SceneRenderer {
         height: u32,
         skip_existing: bool,
     ) {
+        let animation_start = std::time::Instant::now();
+
         if matches!(
-            std::fs::exists(&format!("video/{}.mp4", output_name)),
+            std::fs::exists(&format!("video/{}.mov", output_name)),
             Ok(true)
         ) {
             if skip_existing {
@@ -1308,6 +1773,10 @@ impl SceneRenderer {
             }
         }
 
+        let output_path = std::path::Path::new("video").join(output_name);
+        if let Some(parent) = output_path.parent() {
+            std::fs::create_dir_all(parent).unwrap();
+        }
         drop(std::fs::create_dir("anim"));
         let count = ((duration_seconds * fps as f32) as usize).max(1);
         let exposure = 0.5; // number from 0 to 1
@@ -1354,31 +1823,35 @@ impl SceneRenderer {
 
         println!("Start ffmpeg to render video");
         drop(std::fs::create_dir("video"));
+        let ffmpeg_start = std::time::Instant::now();
         let command = std::process::Command::new("ffmpeg")
-            .arg("-framerate")
-            .arg((fps).to_string())
-            .arg("-i")
-            .arg("anim/frame_%d.png")
-            .arg("-c:v")
-            .arg("libx264")
-            .arg("-b:v")
-            .arg("100M")
-            .arg("-pix_fmt")
-            .arg("yuv444p")
-            .arg("-profile:v")
-            .arg("high444")
-            .arg("-crf")
-            .arg("17")
-            .arg("-color_primaries")
-            .arg("bt709")
-            .arg("-color_trc")
-            .arg("bt709")
-            .arg("-colorspace")
-            .arg("bt709")
-            .arg("-y")
-            .arg(format!("video/{}.mp4", output_name))
-            .output()
-            .expect("failed to execute process");
+        .arg("-framerate").arg(fps.to_string())
+        .arg("-i").arg("anim/frame_%d.png")
+
+        // Keep full-range; tag/convert explicitly to sRGB in YUV420 10-bit
+        .arg("-vf").arg("zscale=primariesin=bt709:transferin=iec61966-2-1:matrixin=bt709:rangein=full:primaries=bt709:transfer=iec61966-2-1:matrix=bt709:range=full,format=yuv420p10le")
+
+        .arg("-c:v").arg("libx265")
+        .arg("-pix_fmt").arg("yuv420p10le")
+        .arg("-crf").arg("15")
+        .arg("-preset").arg("slow")
+
+        // Bitstream + container tags (sRGB transfer)
+        .arg("-x265-params").arg("colorprim=bt709:transfer=iec61966-2-1:colormatrix=bt709:range=full")
+        .arg("-colorspace").arg("bt709")
+        .arg("-color_primaries").arg("bt709")
+        .arg("-color_trc").arg("iec61966-2-1")
+        .arg("-color_range").arg("pc")
+
+        // MOV tends to keep colr atom; hvc1 tag improves compatibility
+        .arg("-movflags").arg("+write_colr+faststart")
+        .arg("-tag:v").arg("hvc1")
+
+        .arg("-y")
+        .arg(format!("video/{output_name}.mov"))
+        .output()
+        .expect("failed to execute ffmpeg");
+        let ffmpeg_elapsed = ffmpeg_start.elapsed();
         std::fs::remove_dir_all("anim").unwrap();
         if command.status.code() != Some(0) {
             println!(
@@ -1388,6 +1861,67 @@ impl SceneRenderer {
             );
         }
         println!("ffmpeg status: {}", command.status);
+        println!("ffmpeg time: {:?}", ffmpeg_elapsed);
+        println!(
+            "Finished `{output_name}` in {:?}",
+            animation_start.elapsed()
+        );
+    }
+
+    fn render_named_animations(
+        &mut self,
+        animation_names: &[String],
+        fps: usize,
+        motion_blur_frames: usize,
+        skip_existing: bool,
+    ) -> Result<(), String> {
+        let mut memory = egui::Memory::default();
+
+        drop(std::fs::create_dir("video"));
+        drop(std::fs::create_dir(format!("video/{}", self.scene_name)));
+
+        for (i, animation_name) in animation_names.iter().enumerate() {
+            if self
+                .scene
+                .init_animation_by_name(animation_name, &mut memory)
+                .is_none()
+            {
+                return Err(format!(
+                    "Scene `{}` has no animation named `{animation_name}`",
+                    self.scene_name
+                ));
+            }
+
+            self.update(&mut memory, 0.);
+            let duration = self.scene.get_current_animation_duration().ok_or_else(|| {
+                format!(
+                    "Scene `{}` animation `{animation_name}` has no duration",
+                    self.scene_name
+                )
+            })?;
+            self.current_fps = fps;
+            self.current_motion_blur_frames = motion_blur_frames;
+            self.update_inner_variables(animation_name);
+
+            println!(
+                "Rendering animation {animation_name}, {}/{}",
+                i + 1,
+                animation_names.len()
+            );
+
+            self.render_animation(
+                duration as f32,
+                self.current_fps,
+                self.current_motion_blur_frames,
+                &format!("{}/{}", self.scene_name, animation_name),
+                &mut memory,
+                self.width,
+                self.height,
+                skip_existing,
+            );
+        }
+
+        Ok(())
     }
 
     fn render_all_animations(
@@ -1395,7 +1929,7 @@ impl SceneRenderer {
         fps: usize,
         motion_blur_frames: usize,
         skip_existing: bool,
-        starts_with: Option<&str>
+        starts_with: Option<&str>,
     ) {
         let mut memory = egui::Memory::default();
 
@@ -1467,9 +2001,38 @@ struct Window {
     input_subscriber_id: usize,
 
     render_scale: f32,
+
+    edit_scene_side_panel: bool,
+    scene_viewport: Option<ViewportRect>,
 }
 
 impl Window {
+    fn edit_scene_ui_contents(&mut self, ui: &mut egui::Ui, changed: &mut WhatChanged) {
+        let (changed1, material) =
+            self.renderer
+                .scene
+                .egui(ui, &mut self.renderer.data, &mut self.should_recompile);
+
+        *changed |= changed1;
+
+        if changed.shader {
+            self.should_recompile = true;
+        }
+
+        if let Some(material) = material {
+            match material {
+                Ok(material) => {
+                    self.renderer.material = material;
+                    self.error_message = None;
+                }
+                Err(err) => {
+                    self.error_message = Some((err.0, err.1));
+                    self.renderer.data.errors = err.2;
+                }
+            }
+        }
+    }
+
     async fn new() -> Self {
         let available_scenes: Scenes = Default::default();
 
@@ -1490,11 +2053,20 @@ impl Window {
             available_scenes.get_by_link(default_scene).unwrap()
         };
 
-        let scene = ron::from_str(scene_content).unwrap();
+        // Prefer new serialized format, fallback to legacy
+        let scene = match ron::from_str::<SerializedScene>(scene_content) {
+            Ok(ser) => {
+                // Build scene from new serialized format
+                Scene::from_serialized(ser)
+            }
+            Err(_) => ron::from_str::<Scene>(scene_content).unwrap(),
+        };
 
         Window {
             renderer: SceneRenderer::new(scene, 4000, 4000, scene_name).await,
             render_scale: 0.5,
+            edit_scene_side_panel: true,
+            scene_viewport: None,
             should_recompile: false,
             dpi_set: false,
 
@@ -1555,10 +2127,13 @@ impl Window {
 
         let mut changed = WhatChanged::default();
 
+        let mut menu_height_points = 0.0f32;
+
         if is_key_pressed(macroquad::input::KeyCode::Escape) {
             self.draw_menu = !self.draw_menu;
         }
         if self.draw_menu {
+            let before_top = ctx.available_rect();
             egui::containers::panel::TopBottomPanel::top("my top").show(ctx, |ui| {
                 use egui::menu;
 
@@ -1570,7 +2145,10 @@ impl Window {
                             }
                             ctx.memory_mut(|memory| {
                                 changed.uniform = true;
-                                let scene = ron::from_str(content).unwrap();
+                                let scene = match ron::from_str::<SerializedScene>(content) {
+                                    Ok(ser) => Scene::from_serialized(ser),
+                                    Err(_) => ron::from_str::<Scene>(content).unwrap(),
+                                };
                                 self.renderer
                                     .load_from_scene(scene, memory)
                                     .unwrap()
@@ -1610,44 +2188,58 @@ impl Window {
                     EngRusSettings::egui(ui);
                 });
             });
+            let after_top = ctx.available_rect();
+            menu_height_points = after_top.top() - before_top.top();
         }
-        let mut edit_scene_opened = self.edit_scene_opened;
-
         let errors_count = self.renderer.scene.errors_count(0, &mut self.renderer.data);
-        egui::Window::new(if errors_count > 0 {
+        let edit_scene_title = if errors_count > 0 {
             format!("Edit scene ({} err)", errors_count)
         } else {
             "Edit scene".to_owned()
-        })
-        .id(egui::Id::new("Edit scene"))
-        .open(&mut edit_scene_opened)
-        .vscroll(true)
-        .hscroll(true)
-        .show(ctx, |ui| {
-            let (changed1, material) =
-                self.renderer
-                    .scene
-                    .egui(ui, &mut self.renderer.data, &mut self.should_recompile);
+        };
 
-            changed |= changed1;
+        let mut edit_scene_side_panel = self.edit_scene_side_panel;
+        let mut side_panel_width_points = 0.0f32;
 
-            if changed.shader {
-                self.should_recompile = true;
+        if self.edit_scene_opened {
+            if edit_scene_side_panel {
+                let before_side = ctx.available_rect();
+                egui::SidePanel::left("Edit scene side panel").show(ctx, |ui| {
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        ui.heading(edit_scene_title.clone());
+                        ui.separator();
+
+                        ui.horizontal(|ui| {
+                            ui.checkbox(&mut edit_scene_side_panel, "Dock as side panel");
+                            if ui.button("Close").clicked() {
+                                self.edit_scene_opened = false;
+                            }
+                        });
+                        ui.separator();
+
+                        self.edit_scene_ui_contents(ui, &mut changed);
+                    });
+                });
+                let after_side = ctx.available_rect();
+                side_panel_width_points = after_side.left() - before_side.left();
+            } else {
+                let mut open = self.edit_scene_opened;
+                egui::Window::new(edit_scene_title)
+                    .id(egui::Id::new("Edit scene"))
+                    .open(&mut open)
+                    .vscroll(true)
+                    .hscroll(true)
+                    .show(ctx, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.checkbox(&mut edit_scene_side_panel, "Dock as side panel");
+                        });
+                        ui.separator();
+
+                        self.edit_scene_ui_contents(ui, &mut changed);
+                    });
+                self.edit_scene_opened = open;
             }
-
-            if let Some(material) = material {
-                match material {
-                    Ok(material) => {
-                        self.renderer.material = material;
-                        self.error_message = None;
-                    }
-                    Err(err) => {
-                        self.error_message = Some((err.0, err.1));
-                        self.renderer.data.errors = err.2;
-                    }
-                }
-            }
-        });
+        }
         if let Some((code, message)) = self.error_message.as_ref() {
             if self.renderer.data.show_error_window {
                 egui::Window::new("Error message")
@@ -1734,21 +2326,77 @@ First, predefined library is included, then uniforms, then user library, then in
 
         {
             let mut not_remove_export = true;
-            if let Some(to_export) = self.renderer.data.to_export.as_ref() {
+            if let Some(_to_export) = self.renderer.data.to_export.as_ref() {
                 egui::Window::new("Export scene")
                     .open(&mut not_remove_export)
                     .vscroll(true)
                     .show(ctx, |ui| {
-                        let mut clone = to_export.clone();
-                        ui.add(
-                            egui::TextEdit::multiline(&mut clone).font(egui::TextStyle::Monospace),
-                        );
+                        // UI state in memory
+                        let (mut use_old, mut compact) = ui.memory_mut(|mem| {
+                            let use_old = *mem.data.get_persisted_mut_or_default::<bool>(
+                                egui::Id::new("export_use_old"),
+                            );
+                            let compact = *mem.data.get_persisted_mut_or_default::<bool>(
+                                egui::Id::new("export_compact"),
+                            );
+                            (use_old, compact)
+                        });
+
+                        ui.checkbox(&mut use_old, "Use old format");
+                        ui.checkbox(&mut compact, "Compact output");
+                        ui.separator();
+
+                        ui.memory_mut(|mem| {
+                            mem.data
+                                .insert_persisted(egui::Id::new("export_use_old"), use_old);
+                            mem.data
+                                .insert_persisted(egui::Id::new("export_compact"), compact);
+                        });
+
+                        // Build content
+                        let content = {
+                            if !use_old {
+                                let ser = self.renderer.scene.to_serialized();
+                                if !compact {
+                                    normalize_pretty_output(
+                                        ron::ser::to_string_pretty(&ser, pretty_config())
+                                            .unwrap_or_else(|_| "<serialize error>".into()),
+                                    )
+                                } else {
+                                    ron::to_string(&ser)
+                                        .unwrap_or_else(|_| "<serialize error>".into())
+                                }
+                            } else {
+                                if !compact {
+                                    normalize_pretty_output(
+                                        ron::ser::to_string_pretty(
+                                            &self.renderer.scene,
+                                            pretty_config(),
+                                        )
+                                        .unwrap_or_else(|_| "<serialize error>".into()),
+                                    )
+                                } else {
+                                    ron::to_string(&self.renderer.scene)
+                                        .unwrap_or_else(|_| "<serialize error>".into())
+                                }
+                            }
+                        };
+                        let mut content_mut = content.clone();
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            ui.add(
+                                egui::TextEdit::multiline(&mut content_mut)
+                                    .font(egui::TextStyle::Monospace)
+                                    .code_editor()
+                                    .desired_rows(10)
+                                    .lock_focus(true)
+                                    .desired_width(f32::INFINITY),
+                            )
+                        });
                     });
             }
             if !not_remove_export {
                 self.renderer.data.to_export = None;
             }
-            self.edit_scene_opened = edit_scene_opened;
         }
 
         {
@@ -1759,28 +2407,60 @@ First, predefined library is included, then uniforms, then user library, then in
                     .open(&mut opened)
                     .vscroll(true)
                     .show(ctx, |ui| {
+                        let mut use_old = ui.memory_mut(|mem| {
+                            *mem.data.get_persisted_mut_or_default::<bool>(egui::Id::new("import_use_old"))
+                        });
+                        ui.checkbox(&mut use_old, "Use old format");
+                        ui.memory_mut(|mem| mem.data.insert_persisted(egui::Id::new("import_use_old"), use_old));
                         if ui.button("Recompile").clicked() {
-                            match ron::from_str::<Scene>(content) {
-                                Ok(scene) => {
-                                    ui.memory_mut(|memory| {
-                                        match self.renderer.load_from_scene(scene, memory) {
-                                            Some(Ok(())) => {},
-                                            Some(Err(_)) | None => {
-                                                self.should_recompile = true;
-                                                self.import_window_errors = Some("Errors in shaders, look into `Edit scene` window after pressing `Recompile`.".to_owned());
-                                            },
-                                        }
-                                    });
-                                },
-                                Err(err) => {
-                                    self.import_window_errors = Some(err.to_string());
+                            if !use_old {
+                                match ron::from_str::<SerializedScene>(content) {
+                                    Ok(ser) => {
+                                        let scene: Scene = Scene::from_serialized(ser);
+                                        ui.memory_mut(|memory| {
+                                            match self.renderer.load_from_scene(scene, memory) {
+                                                Some(Ok(())) => {},
+                                                Some(Err(_)) | None => {
+                                                    self.should_recompile = true;
+                                                    self.import_window_errors = Some("Errors in shaders, look into `Edit scene` window after pressing `Recompile`.".to_owned());
+                                                },
+                                            }
+                                        });
+                                    },
+                                    Err(err) => {
+                                        self.import_window_errors = Some(err.to_string());
+                                    }
+                                }
+                            } else {
+                                match ron::from_str::<Scene>(content) {
+                                    Ok(scene) => {
+                                        ui.memory_mut(|memory| {
+                                            match self.renderer.load_from_scene(scene, memory) {
+                                                Some(Ok(())) => {},
+                                                Some(Err(_)) | None => {
+                                                    self.should_recompile = true;
+                                                    self.import_window_errors = Some("Errors in shaders, look into `Edit scene` window after pressing `Recompile`.".to_owned());
+                                                },
+                                            }
+                                        });
+                                    },
+                                    Err(err) => {
+                                        self.import_window_errors = Some(err.to_string());
+                                    }
                                 }
                             }
                         }
-                        ui.add(
-                            egui::TextEdit::multiline(content)
-                                .font(egui::TextStyle::Monospace),
-                        );
+
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            ui.add(
+                                egui::TextEdit::multiline(content)
+                                    .font(egui::TextStyle::Monospace)
+                                    .code_editor()
+                                    .desired_rows(10)
+                                    .lock_focus(true)
+                                    .desired_width(f32::INFINITY),
+                            )
+                        });
 
                         if let Some(err) = &self.import_window_errors {
                             ui.horizontal_wrapped(|ui| {
@@ -1943,37 +2623,70 @@ First, predefined library is included, then uniforms, then user library, then in
             self.should_recompile = true;
         }
 
+        self.edit_scene_side_panel = edit_scene_side_panel;
+
+        let egui_screen = ctx.screen_rect();
+        let scale_x = screen_width() / egui_screen.width();
+        let scale_y = screen_height() / egui_screen.height();
+
+        let menu_height = menu_height_points * scale_y;
+        let side_panel_width = side_panel_width_points * scale_x;
+
+        let viewport_x = side_panel_width;
+        let viewport_y = menu_height;
+        let viewport_width = screen_width() - side_panel_width;
+        let viewport_height = screen_height() - menu_height;
+
+        let new_viewport = ViewportRect {
+            x: viewport_x,
+            y: viewport_y,
+            width: viewport_width,
+            height: viewport_height,
+        };
+
+        if self
+            .scene_viewport
+            .map(|v| v != new_viewport)
+            .unwrap_or(true)
+        {
+            is_something_changed = true;
+        }
+
+        self.scene_viewport = Some(new_viewport);
+
         is_something_changed
     }
 
     fn draw(&mut self) {
-        if self.render_scale == 1.0 {
-            self.renderer.draw_full_screen();
-        } else {
-            self.renderer.draw_texture(
-                screen_width() * self.render_scale,
-                screen_height() * self.render_scale,
-                false,
-            );
+        let viewport = self.scene_viewport.unwrap_or(ViewportRect {
+            x: 0.0,
+            y: 0.0,
+            width: screen_width(),
+            height: screen_height(),
+        });
 
-            draw_texture_ex(
-                &self.renderer.render_target.texture,
-                0.,
-                0.,
-                WHITE,
-                DrawTextureParams {
-                    source: Some(macroquad::math::Rect::new(
-                        0.,
-                        0.,
-                        screen_width() * self.render_scale,
-                        screen_height() * self.render_scale,
-                    )),
-                    dest_size: Some(macroquad::prelude::vec2(screen_width(), screen_height())),
-                    // flip_y: true,
-                    ..Default::default()
-                },
-            );
-        }
+        let render_width = (viewport.width * self.render_scale).max(1.0);
+        let render_height = (viewport.height * self.render_scale).max(1.0);
+
+        self.renderer
+            .draw_texture(render_width, render_height, false);
+
+        draw_texture_ex(
+            &self.renderer.render_target.texture,
+            viewport.x,
+            viewport.y,
+            WHITE,
+            DrawTextureParams {
+                source: Some(macroquad::math::Rect::new(
+                    0.0,
+                    0.0,
+                    render_width,
+                    render_height,
+                )),
+                dest_size: Some(macroquad::prelude::vec2(viewport.width, viewport.height)),
+                ..Default::default()
+            },
+        );
     }
 }
 
@@ -1989,90 +2702,135 @@ fn window_conf() -> Conf {
     }
 }
 
-async fn render() {
-    // let (width, height) = (3840, 2160);
-    let (width, height) = (3840, 3840);
-    // let (width, height) = (854, 480);
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Debug, Parser)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<CliCommand>,
+}
 
-    // render all scenes as a pictures
-    /*
-    let (width, height) = (4000, 2000);
-    for scene_name in Scenes::default().get_all_scenes_links() {
-        if scene_name != "room" {
-            continue;
-        }
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Debug, Subcommand)]
+enum CliCommand {
+    Render(RenderCliOptions),
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Debug, Args)]
+struct RenderCliOptions {
+    scenes: String,
+
+    animations: Option<String>,
+
+    #[arg(long, default_value_t = 3840)]
+    width: u32,
+
+    #[arg(long, default_value_t = 2160)]
+    height: u32,
+
+    #[arg(long, default_value_t = 60)]
+    fps: usize,
+
+    #[arg(long, alias = "motion_blur_frames", default_value_t = 1)]
+    motion_blur_frames: usize,
+
+    #[arg(
+        long = "stereoimage",
+        visible_alias = "stereo-image",
+        alias = "stereo_image",
+        action = clap::ArgAction::SetTrue
+    )]
+    stereo_image: bool,
+
+    #[arg(
+        long = "no-skip-existing",
+        alias = "no_skip_existing",
+        action = clap::ArgAction::SetTrue
+    )]
+    no_skip_existing: bool,
+
+    #[arg(
+        long = "filter-starts-with",
+        visible_alias = "starts-with",
+        alias = "filter_starts_with",
+        alias = "starts_with",
+        default_value = ""
+    )]
+    starts_with: String,
+
+    #[arg(long, alias = "aa_count", default_value_t = 4)]
+    aa_count: i32,
+
+    #[arg(long, alias = "render_depth", default_value_t = 150)]
+    render_depth: i32,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+async fn render(options: RenderCliOptions) -> Result<(), String> {
+    let width = if options.stereo_image {
+        options
+            .width
+            .checked_mul(2)
+            .ok_or_else(|| "Render width overflow after stereo doubling".to_owned())?
+    } else {
+        options.width
+    };
+
+    let scenes = Scenes::default();
+    for scene_name in options
+        .scenes
+        .split(',')
+        .map(str::trim)
+        .filter(|x| !x.is_empty())
+    {
         println!("Rendering scene {scene_name}");
-        let scene_content = Scenes::default().get_by_link(&scene_name).unwrap().0;
-        let scene = ron::from_str(scene_content).unwrap();
-        let mut renderer = SceneRenderer::new(scene, width, height, &scene_name).await;
-        renderer.cam.use_360_camera = true;
-        renderer.aa_count = 256;
-        renderer.cam.r = 0.;
-        renderer.draw_texture(width as f32, height as f32, true);
-        renderer.render_target.texture.get_texture_data().export_png(&format!("anim/{scene_name}.png"));
-    }
-    return;
-    */
 
-    for scene_name in [
-        "plus_ultra",
+        let scene_content = scenes
+            .get_by_link(scene_name)
+            .map(|(content, _)| content)
+            .ok_or_else(|| format!("Unknown scene `{scene_name}`"))?;
+        let scene: SerializedScene = ron::from_str(scene_content)
+            .map_err(|err| format!("Failed to parse scene `{scene_name}`: {err}"))?;
+        let mut renderer = SceneRenderer::new(
+            Scene::from_serialized(scene),
+            width,
+            options.height,
+            scene_name,
+        )
+        .await;
+        renderer.aa_count = options.aa_count;
+        renderer.render_depth = options.render_depth;
+        renderer.draw_side_by_side = options.stereo_image;
 
-        // "sphere_to_sphere",
-        // "half_spheres",
-        // "recursive_space",
-        // "sphere_intersection",
-        // "spheres_anim",
-        // "teleportation_degrees",
-        // "triple_portal_ish",
-        // "monoportal_rotating",
-    ] {
-        println!("Rendering scene {scene_name}");
-
-        let fps = 60;
-        let motion_blur_frames = 5;
-        let skip_existing = true;
-        let starts_with = Some("v3.");
-
-        let scene_content = Scenes::default().get_by_link(scene_name).unwrap().0;
-        let scene = ron::from_str(scene_content).unwrap();
-        let mut renderer = SceneRenderer::new(scene, width, height, scene_name).await;
-        renderer.aa_count = 4;
-        renderer.render_depth = 150;
-        renderer.cam.view_angle *= 1.5;
-
-        // if true {
-        if false {
-            renderer.render_all_animations(fps, motion_blur_frames, skip_existing, starts_with);
-        }
-
-        if true {
-        // if false {
-            for animation_stage in [
-                "v2.screenshot.5",
-            ] {
-                drop(std::fs::create_dir("video"));
-                drop(std::fs::create_dir(format!(
-                    "video/{}",
-                    renderer.scene_name
-                )));
-
-                let mut memory = egui::Memory::default();
-                renderer.current_fps = fps;
-                renderer.current_motion_blur_frames = motion_blur_frames;
-                renderer.use_animation_stage(animation_stage, &mut memory);
-                renderer.render_animation(
-                    renderer.scene.get_current_animation_duration().unwrap() as f32,
-                    renderer.current_fps,
-                    renderer.current_motion_blur_frames,
-                    &format!("{scene_name}/{animation_stage}"),
-                    &mut memory,
-                    width,
-                    height,
-                    false,
-                );
-            }
+        if let Some(animation_names) = &options.animations {
+            let animation_names = animation_names
+                .split(',')
+                .map(str::trim)
+                .filter(|x| !x.is_empty())
+                .map(str::to_owned)
+                .collect::<Vec<_>>();
+            renderer.render_named_animations(
+                &animation_names,
+                options.fps,
+                options.motion_blur_frames,
+                !options.no_skip_existing,
+            )?;
+        } else {
+            let starts_with = if options.starts_with.is_empty() {
+                None
+            } else {
+                Some(options.starts_with.as_str())
+            };
+            renderer.render_all_animations(
+                options.fps,
+                options.motion_blur_frames,
+                !options.no_skip_existing,
+                starts_with,
+            );
         }
     }
+
+    Ok(())
 }
 
 #[macroquad::main(window_conf)]
@@ -2080,10 +2838,19 @@ async fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     color_backtrace::install();
 
-    // if true {
-    if false {
-        render().await;
-        return;
+    #[cfg(not(target_arch = "wasm32"))]
+    match Cli::parse().command {
+        Some(CliCommand::Render(options)) => {
+            let render_start = std::time::Instant::now();
+            let result = render(options).await;
+            println!("Total render time: {:?}", render_start.elapsed());
+            if let Err(err) = result {
+                eprintln!("{err}");
+                std::process::exit(1);
+            }
+            return;
+        }
+        None => {}
     }
 
     let mut window = Window::new().await;

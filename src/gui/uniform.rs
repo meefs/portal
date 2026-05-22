@@ -25,13 +25,13 @@ impl TrefoilSpecial {
     }
 
     pub fn name_to_index(name: &str) -> Option<u8> {
-        if name.as_bytes().len() != 2 {
+        if name.len() != 2 {
             return None;
         }
         let number = name.as_bytes()[0];
         let letter = name.as_bytes()[1];
 
-        if !(b'a' <= letter && letter <= b'c') || !(b'1' <= number && number <= b'6') {
+        if !((b'a'..=b'c').contains(&letter) && (b'1'..=b'6').contains(&number)) {
             return None;
         }
 
@@ -320,6 +320,14 @@ pub struct TVec3 {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct TVec4 {
+    pub x: ParametrizeOrNot,
+    pub y: ParametrizeOrNot,
+    pub z: ParametrizeOrNot,
+    pub w: ParametrizeOrNot,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ParametrizeOrNot {
     Yes(Option<UniformId>),
     No(f64),
@@ -365,6 +373,81 @@ impl TVec3 {
         self.x.errors_count(uniforms, formulas_cache)
             + self.y.errors_count(uniforms, formulas_cache)
             + self.z.errors_count(uniforms, formulas_cache)
+    }
+
+    pub fn duplicate_as_field(
+        &self,
+        uniforms: &mut Storage2<AnyUniform>,
+        formulas_cache: &mut FormulasCache,
+        visited: &mut std::collections::BTreeMap<UniqueId, UniqueId>,
+    ) -> Self {
+        Self {
+            x: self.x.duplicate_as_field(uniforms, formulas_cache, visited),
+            y: self.y.duplicate_as_field(uniforms, formulas_cache, visited),
+            z: self.z.duplicate_as_field(uniforms, formulas_cache, visited),
+        }
+    }
+}
+
+impl TVec4 {
+    pub fn egui(
+        &mut self,
+        ui: &mut Ui,
+        f: impl Fn(&mut Ui, &mut f64) -> bool,
+        uniforms: &mut Storage2<AnyUniform>,
+        formulas_cache: &mut FormulasCache,
+        data_id: egui::Id,
+    ) -> bool {
+        let mut changed = false;
+        changed |= self
+            .x
+            .egui(ui, "X", 0.0, &f, uniforms, formulas_cache, data_id.with(0));
+        changed |= self
+            .y
+            .egui(ui, "Y", 0.0, &f, uniforms, formulas_cache, data_id.with(1));
+        changed |= self
+            .z
+            .egui(ui, "Z", 0.0, &f, uniforms, formulas_cache, data_id.with(2));
+        changed |= self
+            .w
+            .egui(ui, "W", 0.0, &f, uniforms, formulas_cache, data_id.with(3));
+        changed
+    }
+
+    pub fn remove_as_field(
+        &self,
+        uniforms: &mut Storage2<AnyUniform>,
+        formulas_cache: &mut FormulasCache,
+    ) {
+        self.x.remove_as_field(uniforms, formulas_cache);
+        self.y.remove_as_field(uniforms, formulas_cache);
+        self.z.remove_as_field(uniforms, formulas_cache);
+        self.w.remove_as_field(uniforms, formulas_cache);
+    }
+
+    pub fn errors_count(
+        &self,
+        uniforms: &Storage2<AnyUniform>,
+        formulas_cache: &FormulasCache,
+    ) -> usize {
+        self.x.errors_count(uniforms, formulas_cache)
+            + self.y.errors_count(uniforms, formulas_cache)
+            + self.z.errors_count(uniforms, formulas_cache)
+            + self.w.errors_count(uniforms, formulas_cache)
+    }
+
+    pub fn duplicate_as_field(
+        &self,
+        uniforms: &mut Storage2<AnyUniform>,
+        formulas_cache: &mut FormulasCache,
+        visited: &mut std::collections::BTreeMap<UniqueId, UniqueId>,
+    ) -> Self {
+        Self {
+            x: self.x.duplicate_as_field(uniforms, formulas_cache, visited),
+            y: self.y.duplicate_as_field(uniforms, formulas_cache, visited),
+            z: self.z.duplicate_as_field(uniforms, formulas_cache, visited),
+            w: self.w.duplicate_as_field(uniforms, formulas_cache, visited),
+        }
     }
 }
 
@@ -441,6 +524,24 @@ impl ParametrizeOrNot {
             Yes(Some(id)) => uniforms.errors_inline(*id, formulas_cache),
             Yes(None) => 1,
             No(_) => 0,
+        }
+    }
+
+    pub fn duplicate_as_field(
+        &self,
+        uniforms: &mut Storage2<AnyUniform>,
+        formulas_cache: &mut FormulasCache,
+        visited: &mut std::collections::BTreeMap<UniqueId, UniqueId>,
+    ) -> Self {
+        use ParametrizeOrNot::*;
+        match self {
+            Yes(Some(id)) => Yes(Some(uniforms.duplicate_as_field_with_visited(
+                *id,
+                formulas_cache,
+                visited,
+            ))),
+            Yes(None) => Yes(None),
+            No(f) => No(*f),
         }
     }
 }
@@ -534,7 +635,7 @@ impl FormulasCacheInner {
 }
 
 #[derive(Default)]
-pub struct FormulasCache(RefCell<FormulasCacheInner>, f64, DMat4);
+pub struct FormulasCache(RefCell<FormulasCacheInner>, f64, f64, DMat4);
 
 impl Debug for FormulasCache {
     fn fmt(&self, _: &mut Formatter<'_>) -> fmt::Result {
@@ -578,12 +679,20 @@ impl FormulasCache {
         self.1 = time;
     }
 
+    pub fn get_total_time(&self) -> f64 {
+        self.2
+    }
+
+    pub fn set_total_time(&mut self, time: f64) {
+        self.2 = time;
+    }
+
     pub fn set_camera_matrix(&mut self, mat: DMat4) {
-        self.2 = mat;
+        self.3 = mat;
     }
 
     pub fn get_camera_matrix(&self) -> DMat4 {
-        self.2
+        self.3
     }
 }
 
@@ -959,6 +1068,8 @@ impl StorageElem2 for AnyUniform {
 
                 "time" => formulas_cache.get_time(),
 
+                "total_time" => formulas_cache.get_total_time(),
+
                 // easings
                 "easing_linear" => easing_linear(*args.first()?),
                 "easing_in" => easing_in(*args.first()?),
@@ -966,6 +1077,7 @@ impl StorageElem2 for AnyUniform {
                 "easing_in_out" => easing_in_out(*args.first()?),
                 "easing_in_out_fast" => easing_in_out_fast(*args.first()?),
                 "easing_plus_minus" => easing_plus_minus(*args.first()?),
+                "easing_elastic_out" => easing_elastic_out(*args.first()?),
 
                 "bump" => {
                     let x = *args.first()?;
@@ -979,6 +1091,22 @@ impl StorageElem2 for AnyUniform {
                     } else {
                         0.
                     }
+                }
+
+                "later_start" => {
+                    // https://www.desmos.com/calculator/bmso7lev0b
+                    // \left(\max\left(\frac{x}{1-0.25}-\frac{0.25}{1-0.25},\ 0\right)\right)\left\{0<x<1\right\}
+                    let t = *args.first()?;
+                    let time = 1. - *args.get(1)?;
+                    0.0_f64.max(t / time - (1. - time) / time)
+                }
+
+                "early_finish" => {
+                    // https://www.desmos.com/calculator/fhg7bd2jpq
+                    // \min\left(\frac{x}{0.25},\ 1\right)\left\{0<x<1\right\}
+                    let t = *args.first()?;
+                    let time = *args.get(1)?;
+                    1.0_f64.min(t / time)
                 }
 
                 "lerp" => lerp((*args.first()?)..=(*args.get(1)?), *args.get(2)?),
@@ -1024,5 +1152,12 @@ impl StorageElem2 for AnyUniform {
         } else {
             0
         }
+    }
+
+    fn duplicate_inline<F>(&self, _map_self: &mut F, _input: &mut Self::Input) -> Self
+    where
+        F: FnMut(Self::IdWrapper, &mut Self::Input) -> Self::IdWrapper,
+    {
+        self.clone()
     }
 }

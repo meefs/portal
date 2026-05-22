@@ -3,3 +3,8 @@ data
 scene_dump.ron
 video
 anim
+target-wsl
+diffs
+video_png
+scene_dump_temp.ron
+.codex
